@@ -205,3 +205,29 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+# --- Added for GIU Data Engineering Project ---
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# Data files (avoid uploading large raw datasets)
+data/*.csv
+data/*.parquet
+data/*.xlsx
+
+# Environment folders
+env/
+venv/
+.venv/
+
+# Logs & system files
+*.log
+*.DS_Store
+Thumbs.db
+
+# Node (if using React/Plotly.js)
+node_modules/
+build/
+
+# Heroku / Vercel build cache
+*.pkl
