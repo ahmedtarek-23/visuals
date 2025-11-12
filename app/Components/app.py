@@ -5,8 +5,8 @@ import pandas as pd
 import plotly.express as px
 
 # IMPORTANT: Assuming data_filters.py and chart_generation.py are in a 'utils' directory
-from data_filters import get_filter_options, filter_data
-from chart_generation import create_borough_crash_bar_chart
+from filters import get_filter_options, filter_data
+from charts import create_borough_crash_bar_chart
 
 # --- 1. DATA LOADING (Run once at startup) ---
 try:
@@ -178,4 +178,4 @@ def update_report(n_clicks, borough, year, factor, vehicleType, search_term):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run(debug=True)
