@@ -57,5 +57,8 @@ Make sure to place your data files into the `data/` folder before deploying or p
 
 ## Team & Contributions
 
-- Tarek Metwally — data cleaning, notebook and app integration
-- (Add other team members here)
+- Ahmed Tarek Metwally — data cleaning, notebook and app integration
+- Mazen Ahmed
+-Ramy Emad
+-Khafagy
+-Omar Mostafa
