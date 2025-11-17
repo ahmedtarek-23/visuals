@@ -214,6 +214,7 @@ __marimo__/
 data/*.csv
 data/*.parquet
 data/*.xlsx
+notebook/*.csv
 
 # Environment folders
 env/
