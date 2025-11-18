@@ -1,181 +1,179 @@
-import dash
-from dash import dcc, html
 from dash.dependencies import Input, Output, State
-import pandas as pd
+import dash
 import plotly.express as px
 
-# IMPORTANT: Assuming data_filters.py and chart_generation.py are in a 'utils' directory
-from filters import get_filter_options, filter_data
-from charts import create_borough_crash_bar_chart
+from dash import dcc, html
+import dash_bootstrap_components as dbc
 
-# --- 1. DATA LOADING (Run once at startup) ---
-try:
-    # Load the single source of truth: the final cleaned and merged data
-    DATA_PATH = 'merged_crashes_person.csv'
-    df_global = pd.read_csv(DATA_PATH)
-    print(f"✅ Data loaded successfully from {DATA_PATH}. Shape: {df_global.shape}")
-except FileNotFoundError:
-    print(f"❌ Error: {DATA_PATH} not found. Please ensure your integrated CSV is in the root directory.")
-    df_global = pd.DataFrame() # Use empty DF as fallback
+from charts import Bar_chart, Pie_chart
+from DataLoader import load_data, Brough_options, CRASH_YEAR, Contributing_Factor1, Contributing_Factor2, Vehicle1, Vehicle2, Injury
 
-# Generate dynamic filter options from the loaded data
-FILTER_OPTIONS = get_filter_options(df_global)
+df = load_data()  # now your app can use df anywhere
 
-# Map the frontend names (used in the HTML layout) to the backend column names
-FILTER_MAP = {
-    'borough': 'BOROUGH',
-    'year': 'CRASH_YEAR',
-    'factor': 'CONTRIBUTING FACTOR VEHICLE 1',
-    'vehicleType': 'VEHICLE TYPE CODE 1'
-}
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.SOLAR], suppress_callback_exceptions=True)
 
+app.layout = html.Div([
 
-# --- 2. INITIALIZE DASH APP ---
-app = dash.Dash(__name__, external_stylesheets=['https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css'])
-server = app.server # Required for deployment platforms like Heroku
+    html.H1("Analytical Dashboard", style={"text-align": "center", "margin-bottom": "30px"}),
 
+    dbc.Container([
 
-# --- 3. DASHBOARD LAYOUT (UI) ---
+        dbc.Row([
+            dcc.Dropdown(id="my-BroughDropdown",
+                         options=[{"label": "All", "value": "ALL"},
+                                  {"label": "None", "value": "NONE"}] +
+                                 [{"label": b, "value": b} for b in Brough_options],
+                         placeholder="Select Borough....",
+                         multi=False,
+                         style={"width": "200px"}),
 
-# Helper function to create filter dropdowns
-def create_dropdown(label, name, options):
-    """Creates a standardized Dash Core Component Dropdown."""
-    return html.Div(className="flex flex-col space-y-1", children=[
-        html.Label(label, className="text-xs font-medium text-gray-500"),
-        dcc.Dropdown(
-            id=f'{name}-dropdown',
-            options=[{'label': i, 'value': i} for i in options],
-            value=options[0], # Set default to the first option (usually 'ALL')
-            clearable=False,
-            className="text-sm border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 hover:border-blue-300"
-        )
-    ])
+            dcc.Dropdown(id="year-dropdown",
+                         options=[{"label": "All", "value": "ALL"},
+                                  {"label": "None", "value": "NONE"}] +
+                                 [{"label": y, "value": y} for y in CRASH_YEAR],
+                         placeholder="Select Year....",
+                         multi=False,
+                         style={"width": "200px"}),
 
-app.layout = html.Div(className="min-h-screen bg-gray-100 p-4 sm:p-8 font-sans", children=[
-    
-    # Header
-    html.Header(className="mb-6", children=[
-        html.H1("NYC Collision Insights Dashboard (Dash)", className="text-3xl font-extrabold text-gray-800"),
-        html.P("Interactive exploration of integrated crash and person data.", className="text-gray-500 mt-1"),
-    ]),
+            dcc.Dropdown(id="Controbuting1_Dropdown",
+                         options=[{"label": "All", "value": "ALL"},
+                                  {"label": "None", "value": "NONE"}] +
+                                 [{"label": c, "value": c} for c in Contributing_Factor1],
+                         placeholder="Select Contributing factor 1....",
+                         multi=False,
+                         style={"width": "300px"}),
 
-    # --- FILTER CONTROLS AREA ---
-    html.Div(className="bg-white p-6 rounded-xl shadow-2xl border border-gray-200", children=[
-        html.H2("Data Filters & Search Mode", className="text-xl font-bold text-gray-700 mb-4"),
-        
-        # Dropdown Filters Grid
-        html.Div(className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6", children=[
-            create_dropdown("1. Borough", "borough", FILTER_OPTIONS.get('BOROUGH', ['ALL'])),
-            create_dropdown("2. Crash Year", "year", FILTER_OPTIONS.get('CRASH_YEAR', ['ALL'])),
-            create_dropdown("3. Contributing Factor", "factor", FILTER_OPTIONS.get('CONTRIBUTING FACTOR VEHICLE 1', ['ALL'])),
-            create_dropdown("4. Vehicle Type", "vehicleType", FILTER_OPTIONS.get('VEHICLE TYPE CODE 1', ['ALL'])),
+            dcc.Dropdown(id="Controbuting2_Dropdown",
+                         options=[{"label": "All", "value": "ALL"},
+                                  {"label": "None", "value": "NONE"}] +
+                                 [{"label": l, "value": l} for l in Contributing_Factor2],
+                         placeholder="Select Contributing factor 2....",
+                         multi=False,
+                         style={"width": "200px"}),
+        ], className="Rows 1"),
+
+        dbc.Row([
+            dcc.Dropdown(id="Vehicle1_Dropdown",
+                         options=[{"label": "All", "value": "ALL"},
+                                  {"label": "None", "value": "NONE"}] +
+                                 [{"label": v, "value": v} for v in Vehicle1],
+                         placeholder="Select Vehicle type 1....",
+                         multi=False,
+                         style={"width": "200px"}),
+
+            dcc.Dropdown(id="Vehicle2_Dropdown",
+                         options=[{"label": "All", "value": "ALL"},
+                                  {"label": "None", "value": "NONE"}] +
+                                 [{"label": f, "value": f} for f in Vehicle2],
+                         placeholder="Select Vehicle type 2....",
+                         multi=False,
+                         style={"width": "200px"}),
+
+            dcc.Dropdown(id="Injury_dropdown",
+                         options=[{"label": "All", "value": "ALL"},
+                                  {"label": "None", "value": "NONE"}] +
+                                 [{"label": i, "value": i} for i in Injury],
+                         placeholder="Select Injury Type....",
+                         multi=False,
+                         style={"width": "200px"}),
+        ], className="Rows 2"),
+
+        html.Div([
+            html.Button("Generate Report", id="generate-report-button", n_clicks=0)
         ]),
 
-        # Search Mode and Generate Button
-        html.Div(className="flex flex-col md:flex-row gap-4 pt-4 border-t border-gray-100", children=[
-            
-            # Search Input (Search Mode)
-            html.Div(className="relative flex-1", children=[
-                dcc.Input(
-                    id='search-input',
-                    type='text',
-                    placeholder="Search mode: e.g., 'Queens 2023 pedestrian accident'",
-                    className="w-full pl-4 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-                )
-            ]),
+        dbc.Row([
+            dbc.Col(dcc.Graph(id="pie-chart"), width=6),
+            dbc.Col(dcc.Graph(id="Bar_chart"), width=6)
+        ], className="Graphs-Rows"),
 
-            # Generate Report Button (CRITICAL REQUIREMENT)
-            html.Button(
-                'Generate Report',
-                id='generate-button',
-                n_clicks=0,
-                className="w-full md:w-auto px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-150 transform active:scale-95"
-            ),
-        ]),
-    ]),
-    
-    # --- VISUALIZATION REPORT AREA ---
-    html.Main(className="mt-8", children=[
-        html.Div(id='loading-output', className="text-center py-4", children=[
-            html.P("Apply filters and click 'Generate Report' to view insights.", className="text-gray-500")
-        ]),
-        
-        # Chart 1 Container
-        html.Div(className="p-6 bg-white border border-gray-200 rounded-xl shadow-lg mb-6", children=[
-            html.H4("Total Crashes by Borough", className="text-lg font-semibold mb-3"),
-            dcc.Graph(id='borough-crash-chart', config={'displayModeBar': False})
-        ]),
-        
-        # Chart 2 Container (Placeholder for another required chart)
-        html.Div(className="p-6 bg-white border border-gray-200 rounded-xl shadow-lg", children=[
-            html.H4("Injuries by Vehicle Type (Placeholder)", className="text-lg font-semibold mb-3"),
-            dcc.Graph(id='injury-vehicle-chart', config={'displayModeBar': False})
-        ]),
-    ])
+        html.Div(id="output")
+
+    ], fluid=True)
+
 ])
-
-
-# --- 4. CALLBACKS (CONNECTING UI TO DATA LOGIC) ---
 
 @app.callback(
     [
-        Output('borough-crash-chart', 'figure'),
-        Output('injury-vehicle-chart', 'figure'),
-        Output('loading-output', 'children')
+        Output('Bar_chart', 'figure'),
+        Output('pie-chart', 'figure'),
     ],
-    [Input('generate-button', 'n_clicks')],
-    [
-        State('borough-dropdown', 'value'),
-        State('year-dropdown', 'value'),
-        State('factor-dropdown', 'value'),
-        State('vehicleType-dropdown', 'value'),
-        State('search-input', 'value'),
-    ]
+    Input('generate-report-button', 'n_clicks'),
+    State("my-BroughDropdown", "value"),
+    State("year-dropdown", "value"),
+    State("Controbuting1_Dropdown", "value"),
+    State("Controbuting2_Dropdown", "value"),
+    State("Vehicle1_Dropdown", "value"),
+    State("Vehicle2_Dropdown", "value"),
+    State("Injury_dropdown", "value"),
 )
-def update_report(n_clicks, borough, year, factor, vehicleType, search_term):
-    # Only run the report generation when the button is clicked (n_clicks > 0)
-    if n_clicks is None or n_clicks == 0:
-        # Initial state: Return empty/placeholder figures
-        return (
-            px.bar(title=""), 
-            px.bar(title=""), 
-            "Apply filters and click 'Generate Report' to view insights."
-        )
+def update_charts(n_clicks, selected_boroughs, selected_year,
+                  Selected_Contributing1, Selected_Contributing2,
+                  Selected_Vehicle1, Selected_Vehicle2, Selected_Injury):
 
-    # Display loading message (or spinner) while processing
-    loading_message = html.Div("Generating Report... This may take a moment.", className="text-blue-500 font-semibold")
+    if n_clicks == 0:
+        return dash.no_update
 
-    # 1. Collect all filter states
-    current_filters = {
-        'borough': borough,
-        'year': year,
-        'factor': factor,
-        'vehicleType': vehicleType,
-    }
-    
-    # 2. Filter the global dataset using the utility function
-    df_filtered = filter_data(df_global, current_filters, search_term or '')
-    
-    # 3. Generate Charts using the utility function
-    fig1 = create_borough_crash_bar_chart(df_filtered)
-    
-    # Placeholder for a second required chart
-    if df_filtered.empty:
-         fig2 = px.bar(title="No Data for Injuries by Vehicle Type")
+    df_filtered = df.copy()
+
+    if selected_boroughs == "ALL":
+        pass
+    elif selected_boroughs == "NONE":
+        pass
     else:
-        # Example: Injuries by Vehicle Type (You need to implement this function in chart_generation.py)
-        injury_counts = df_filtered.groupby('VEHICLE TYPE CODE 1')['NUMBER OF PERSONS INJURED'].sum().reset_index()
-        fig2 = px.bar(
-            injury_counts.head(10), # Show top 10 for performance/clarity
-            x='VEHICLE TYPE CODE 1',
-            y='NUMBER OF PERSONS INJURED',
-            title='Top 10 Injuries by Vehicle Type',
-            template='plotly_white'
-        )
-        
-    # Return figures and a success message
-    return fig1, fig2, html.P(f"Report Generated successfully for {df_filtered.shape[0]} records.", className="text-green-600 font-semibold")
+        df_filtered = df_filtered[df_filtered["BOROUGH"] == selected_boroughs]
+
+    if selected_year == "ALL":
+        pass
+    elif selected_year == "NONE":
+        pass
+    else:
+        df_filtered = df_filtered[df_filtered["CRASH_YEAR"] == selected_year]
+
+    if Selected_Contributing1 == "ALL":
+        pass
+    elif Selected_Contributing1 == "NONE":
+        pass
+    else:
+        df_filtered = df_filtered[df_filtered["CONTRIBUTING FACTOR VEHICLE 1"] == Selected_Contributing1]
+
+    if Selected_Contributing2 == "ALL":
+        pass
+    elif Selected_Contributing2 == "NONE":
+        pass
+    else:
+        df_filtered = df_filtered[df_filtered["CONTRIBUTING FACTOR VEHICLE 2"] == Selected_Contributing2]
+
+    if Selected_Vehicle1 == "ALL":
+        pass
+    elif Selected_Vehicle1 == "NONE":
+        pass
+    else:
+        df_filtered = df_filtered[df_filtered["VEHICLE TYPE CODE 1"] == Selected_Vehicle1]
+
+    if Selected_Vehicle2 == "ALL":
+        pass
+    elif Selected_Vehicle2 == "NONE":
+        pass
+    else:
+        df_filtered = df_filtered[df_filtered["VEHICLE TYPE CODE 2"] == Selected_Vehicle2]
+
+    if Selected_Injury == "ALL":
+        pass
+    elif Selected_Injury == "NONE":
+        pass
+    else:
+        df_filtered = df_filtered[df_filtered["PERSON_INJURY"] == Selected_Injury]
+
+    # If df_filtered is empty, return empty figures
+    if df_filtered.empty:
+        return px.bar(title="No data available"), px.pie(title="No data available")
+
+    bar_fig = Bar_chart(df_filtered)
+    pie_fig = Pie_chart(df_filtered, "CONTRIBUTING FACTOR VEHICLE 1")
+
+    return bar_fig, pie_fig
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
