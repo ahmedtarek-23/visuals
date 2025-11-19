@@ -1,181 +1,103 @@
 import dash
-from dash import dcc, html
-from dash.dependencies import Input, Output, State
-import pandas as pd
-import plotly.express as px
+import dash_bootstrap_components as dbc
+from dash import html, dcc, Input, Output, State
+import filters
+import charts
 
-# IMPORTANT: Assuming data_filters.py and chart_generation.py are in a 'utils' directory
-from filters import get_filter_options, filter_data
-from charts import create_borough_crash_bar_chart
+# Initialize
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+df = filters.load_data()
 
-# --- 1. DATA LOADING (Run once at startup) ---
-try:
-    # Load the single source of truth: the final cleaned and merged data
-    DATA_PATH = 'merged_crashes_person.csv'
-    df_global = pd.read_csv(DATA_PATH)
-    print(f"✅ Data loaded successfully from {DATA_PATH}. Shape: {df_global.shape}")
-except FileNotFoundError:
-    print(f"❌ Error: {DATA_PATH} not found. Please ensure your integrated CSV is in the root directory.")
-    df_global = pd.DataFrame() # Use empty DF as fallback
+# --- Components Helper ---
+def make_dropdown(label, id, col):
+    return dbc.Col([
+        dbc.Label(label, className="fw-bold"),
+        dcc.Dropdown(id=id, options=filters.get_options(df, col), placeholder="All")
+    ], md=4, className="mb-3")
 
-# Generate dynamic filter options from the loaded data
-FILTER_OPTIONS = get_filter_options(df_global)
-
-# Map the frontend names (used in the HTML layout) to the backend column names
-FILTER_MAP = {
-    'borough': 'BOROUGH',
-    'year': 'CRASH_YEAR',
-    'factor': 'CONTRIBUTING FACTOR VEHICLE 1',
-    'vehicleType': 'VEHICLE TYPE CODE 1'
-}
-
-
-# --- 2. INITIALIZE DASH APP ---
-app = dash.Dash(__name__, external_stylesheets=['https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css'])
-server = app.server # Required for deployment platforms like Heroku
-
-
-# --- 3. DASHBOARD LAYOUT (UI) ---
-
-# Helper function to create filter dropdowns
-def create_dropdown(label, name, options):
-    """Creates a standardized Dash Core Component Dropdown."""
-    return html.Div(className="flex flex-col space-y-1", children=[
-        html.Label(label, className="text-xs font-medium text-gray-500"),
-        dcc.Dropdown(
-            id=f'{name}-dropdown',
-            options=[{'label': i, 'value': i} for i in options],
-            value=options[0], # Set default to the first option (usually 'ALL')
-            clearable=False,
-            className="text-sm border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 hover:border-blue-300"
-        )
-    ])
-
-app.layout = html.Div(className="min-h-screen bg-gray-100 p-4 sm:p-8 font-sans", children=[
+# --- Layout ---
+app.layout = dbc.Container([
+    dbc.NavbarSimple(brand="NYC Traffic Crashes Dashboard", color="dark", dark=True, className="mb-4"),
     
-    # Header
-    html.Header(className="mb-6", children=[
-        html.H1("NYC Collision Insights Dashboard (Dash)", className="text-3xl font-extrabold text-gray-800"),
-        html.P("Interactive exploration of integrated crash and person data.", className="text-gray-500 mt-1"),
-    ]),
-
-    # --- FILTER CONTROLS AREA ---
-    html.Div(className="bg-white p-6 rounded-xl shadow-2xl border border-gray-200", children=[
-        html.H2("Data Filters & Search Mode", className="text-xl font-bold text-gray-700 mb-4"),
-        
-        # Dropdown Filters Grid
-        html.Div(className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6", children=[
-            create_dropdown("1. Borough", "borough", FILTER_OPTIONS.get('BOROUGH', ['ALL'])),
-            create_dropdown("2. Crash Year", "year", FILTER_OPTIONS.get('CRASH_YEAR', ['ALL'])),
-            create_dropdown("3. Contributing Factor", "factor", FILTER_OPTIONS.get('CONTRIBUTING FACTOR VEHICLE 1', ['ALL'])),
-            create_dropdown("4. Vehicle Type", "vehicleType", FILTER_OPTIONS.get('VEHICLE TYPE CODE 1', ['ALL'])),
-        ]),
-
-        # Search Mode and Generate Button
-        html.Div(className="flex flex-col md:flex-row gap-4 pt-4 border-t border-gray-100", children=[
-            
-            # Search Input (Search Mode)
-            html.Div(className="relative flex-1", children=[
-                dcc.Input(
-                    id='search-input',
-                    type='text',
-                    placeholder="Search mode: e.g., 'Queens 2023 pedestrian accident'",
-                    className="w-full pl-4 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-                )
+    # Filters Section (7 Filters as requested)
+    dbc.Card([
+        dbc.CardHeader("Data Filters"),
+        dbc.CardBody([
+            dbc.Row([
+                make_dropdown("Borough", "f-borough", "BOROUGH"),
+                make_dropdown("Year", "f-year", "CRASH_YEAR"),
+                make_dropdown("Demographic", "f-demo", "MOST_COMMON_SEX"),
             ]),
+            dbc.Row([
+                make_dropdown("Factor 1", "f-fac1", "CONTRIBUTING FACTOR VEHICLE 1"),
+                make_dropdown("Factor 2", "f-fac2", "CONTRIBUTING FACTOR VEHICLE 2"),
+                make_dropdown("Vehicle 1", "f-veh1", "VEHICLE TYPE CODE 1"),
+            ]),
+            dbc.Row([
+                dbc.Col(make_dropdown("Vehicle 2", "f-veh2", "VEHICLE TYPE CODE 2"), md=8),
+                dbc.Col([
+                    html.Br(),
+                    dbc.Button("Generate Report", id="btn-gen", color="success", className="me-2"),
+                    dbc.Button("Reset", id="btn-reset", color="secondary")
+                ], md=4, className="d-flex align-items-center")
+            ])
+        ])
+    ], className="mb-4"),
 
-            # Generate Report Button (CRITICAL REQUIREMENT)
-            html.Button(
-                'Generate Report',
-                id='generate-button',
-                n_clicks=0,
-                className="w-full md:w-auto px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-150 transform active:scale-95"
-            ),
-        ]),
-    ]),
+    # Stats Cards
+    dbc.Row([
+        dbc.Col(dbc.Card([dbc.CardBody([html.H3(id="s-crash"), html.P("Total Crashes")])], color="primary", inverse=True)),
+        dbc.Col(dbc.Card([dbc.CardBody([html.H3(id="s-inj"), html.P("Total Injuries")])], color="warning", inverse=True)),
+        dbc.Col(dbc.Card([dbc.CardBody([html.H3(id="s-fat"), html.P("Total Fatalities")])], color="danger", inverse=True)),
+        dbc.Col(dbc.Card([dbc.CardBody([html.H3(id="s-avg"), html.P("Avg Persons Involved")])], color="info", inverse=True)),
+    ], className="mb-4"),
+
+    # Charts Grid
+    dbc.Row([
+        dbc.Col(dcc.Graph(id="c-bar"), md=6),
+        dbc.Col(dcc.Graph(id="c-pie"), md=6),
+    ], className="mb-4"),
     
-    # --- VISUALIZATION REPORT AREA ---
-    html.Main(className="mt-8", children=[
-        html.Div(id='loading-output', className="text-center py-4", children=[
-            html.P("Apply filters and click 'Generate Report' to view insights.", className="text-gray-500")
-        ]),
-        
-        # Chart 1 Container
-        html.Div(className="p-6 bg-white border border-gray-200 rounded-xl shadow-lg mb-6", children=[
-            html.H4("Total Crashes by Borough", className="text-lg font-semibold mb-3"),
-            dcc.Graph(id='borough-crash-chart', config={'displayModeBar': False})
-        ]),
-        
-        # Chart 2 Container (Placeholder for another required chart)
-        html.Div(className="p-6 bg-white border border-gray-200 rounded-xl shadow-lg", children=[
-            html.H4("Injuries by Vehicle Type (Placeholder)", className="text-lg font-semibold mb-3"),
-            dcc.Graph(id='injury-vehicle-chart', config={'displayModeBar': False})
-        ]),
-    ])
-])
+    dbc.Row([
+        dbc.Col(dcc.Graph(id="c-line"), md=6),
+        dbc.Col(dcc.Graph(id="c-heat"), md=6),
+    ], className="mb-4"),
+    
+    dbc.Row(dbc.Col(dcc.Graph(id="c-map"), md=12))
 
+], fluid=True)
 
-# --- 4. CALLBACKS (CONNECTING UI TO DATA LOGIC) ---
+# --- Callbacks ---
+@app.callback(
+    [Output('f-borough', 'value'), Output('f-year', 'value'), Output('f-demo', 'value'),
+     Output('f-fac1', 'value'), Output('f-fac2', 'value'), Output('f-veh1', 'value'), Output('f-veh2', 'value')],
+    [Input('btn-reset', 'n_clicks')]
+)
+def reset_filters(n):
+    return [None] * 7
 
 @app.callback(
-    [
-        Output('borough-crash-chart', 'figure'),
-        Output('injury-vehicle-chart', 'figure'),
-        Output('loading-output', 'children')
-    ],
-    [Input('generate-button', 'n_clicks')],
-    [
-        State('borough-dropdown', 'value'),
-        State('year-dropdown', 'value'),
-        State('factor-dropdown', 'value'),
-        State('vehicleType-dropdown', 'value'),
-        State('search-input', 'value'),
-    ]
+    [Output('s-crash', 'children'), Output('s-inj', 'children'), Output('s-fat', 'children'), Output('s-avg', 'children'),
+     Output('c-bar', 'figure'), Output('c-pie', 'figure'), Output('c-line', 'figure'), Output('c-heat', 'figure'), Output('c-map', 'figure')],
+    [Input('btn-gen', 'n_clicks')],
+    [State('f-borough', 'value'), State('f-year', 'value'), State('f-demo', 'value'),
+     State('f-fac1', 'value'), State('f-fac2', 'value'), State('f-veh1', 'value'), State('f-veh2', 'value')]
 )
-def update_report(n_clicks, borough, year, factor, vehicleType, search_term):
-    # Only run the report generation when the button is clicked (n_clicks > 0)
-    if n_clicks is None or n_clicks == 0:
-        # Initial state: Return empty/placeholder figures
-        return (
-            px.bar(title=""), 
-            px.bar(title=""), 
-            "Apply filters and click 'Generate Report' to view insights."
-        )
-
-    # Display loading message (or spinner) while processing
-    loading_message = html.Div("Generating Report... This may take a moment.", className="text-blue-500 font-semibold")
-
-    # 1. Collect all filter states
-    current_filters = {
-        'borough': borough,
-        'year': year,
-        'factor': factor,
-        'vehicleType': vehicleType,
-    }
+def update(n, bor, year, demo, fac1, fac2, veh1, veh2):
+    # Gather inputs into a dict
+    inputs = {'borough': bor, 'year': year, 'demographic': demo, 
+              'factor1': fac1, 'factor2': fac2, 'vehicle1': veh1, 'vehicle2': veh2}
     
-    # 2. Filter the global dataset using the utility function
-    df_filtered = filter_data(df_global, current_filters, search_term or '')
+    # Filter
+    dff = filters.filter_dataframe(df, inputs)
     
-    # 3. Generate Charts using the utility function
-    fig1 = create_borough_crash_bar_chart(df_filtered)
+    # Stats
+    s1, s2, s3, s4 = charts.get_stats(dff)
     
-    # Placeholder for a second required chart
-    if df_filtered.empty:
-         fig2 = px.bar(title="No Data for Injuries by Vehicle Type")
-    else:
-        # Example: Injuries by Vehicle Type (You need to implement this function in chart_generation.py)
-        injury_counts = df_filtered.groupby('VEHICLE TYPE CODE 1')['NUMBER OF PERSONS INJURED'].sum().reset_index()
-        fig2 = px.bar(
-            injury_counts.head(10), # Show top 10 for performance/clarity
-            x='VEHICLE TYPE CODE 1',
-            y='NUMBER OF PERSONS INJURED',
-            title='Top 10 Injuries by Vehicle Type',
-            template='plotly_white'
-        )
-        
-    # Return figures and a success message
-    return fig1, fig2, html.P(f"Report Generated successfully for {df_filtered.shape[0]} records.", className="text-green-600 font-semibold")
-
+    # Charts
+    return s1, s2, s3, s4, \
+           charts.create_bar(dff), charts.create_pie(dff), \
+           charts.create_line(dff), charts.create_heatmap(dff), charts.create_map(dff)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=8050)

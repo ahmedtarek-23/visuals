@@ -1,84 +1,73 @@
 import plotly.express as px
-import pandas as pd # Needed for value_counts() and reset_index()
+import plotly.graph_objects as go
+import pandas as pd
 
-# --- 1. CRASHES BY BOROUGH CHART ---
+# Common template to fix the bug you had earlier
+TEMPLATE = "plotly_white"
 
-def create_borough_crash_bar_chart(df_filtered):
-    """
-    Generates a Plotly Bar Chart showing the count of crashes per Borough.
+def empty_fig(text="No Data"):
+    return {
+        "layout": {
+            "xaxis": {"visible": False},
+            "yaxis": {"visible": False},
+            "annotations": [{"text": text, "showarrow": False}]
+        }
+    }
+
+def get_stats(df):
+    """Calculates the 4 numbers for the top cards."""
+    if df.empty: return "0", "0", "0", "0"
     
-    Args:
-        df_filtered (pd.DataFrame): The data subset after filtering.
-        
-    Returns:
-        plotly.graph_objects.Figure: The interactive Plotly chart object.
-    """
-    if df_filtered.empty:
-        # Create a blank plot if no data is available
-        return px.bar(title="No Data to Display")
-
-    # Count crashes per borough
-    crash_counts = df_filtered['BOROUGH'].value_counts().reset_index()
-    crash_counts.columns = ['Borough', 'Crash Count']
-
-    fig = px.bar(
-        crash_counts, 
-        x='Borough', 
-        y='Crash Count', 
-        color='Borough',
-        title='Total Crashes by Borough',
-        labels={'Crash Count': 'Number of Collisions', 'Borough': 'NYC Borough'},
-        template='plotly_white'
-    )
+    crashes = len(df)
+    injuries = df['NUMBER OF PERSONS INJURED'].sum() if 'NUMBER OF PERSONS INJURED' in df.columns else 0
     
-    # Apply aesthetic updates for better visualization
-    fig.update_layout(
-        font_family="Inter",
-        title_font_size=20,
-        margin=dict(l=20, r=20, t=50, b=20),
-        xaxis={'categoryorder':'total descending'}
-    )
+    # Summing all fatality columns
+    fatality_cols = ['NUMBER OF PEDESTRIANS KILLED', 'NUMBER OF CYCLIST KILLED', 'NUMBER OF MOTORIST KILLED']
+    fatalities = df[fatality_cols].sum().sum() if all(c in df.columns for c in fatality_cols) else 0
     
+    avg_people = df['PERSONS_INVOLVED_COUNT'].mean() if 'PERSONS_INVOLVED_COUNT' in df.columns else 0
+    
+    return f"{crashes:,}", f"{int(injuries):,}", f"{int(fatalities):,}", f"{avg_people:.1f}"
+
+def create_bar(df):
+    """Bar: Total Injuries by Borough."""
+    if df.empty: return empty_fig()
+    data = df.groupby('BOROUGH')['NUMBER OF PERSONS INJURED'].sum().reset_index()
+    fig = px.bar(data, x='BOROUGH', y='NUMBER OF PERSONS INJURED', title="Injuries by Borough")
+    fig.update_layout(template=TEMPLATE)
     return fig
 
+def create_pie(df):
+    """Pie: Top Contributing Factors."""
+    if df.empty: return empty_fig()
+    data = df['CONTRIBUTING FACTOR VEHICLE 1'].value_counts().head(10)
+    fig = px.pie(names=data.index, values=data.values, title="Top Contributing Factors")
+    fig.update_layout(template=TEMPLATE)
+    return fig
 
-# --- 2. INJURIES BY VEHICLE TYPE CHART (NEW) ---
+def create_line(df):
+    """Line: Crashes per Month."""
+    if df.empty or 'CRASH_MONTH' not in df.columns: return empty_fig()
+    data = df.groupby('CRASH_MONTH').size().reset_index(name='COUNT')
+    fig = px.line(data, x='CRASH_MONTH', y='COUNT', title="Crashes per Month", markers=True)
+    fig.update_layout(template=TEMPLATE, xaxis=dict(tickmode='linear', tick0=1, dtick=1))
+    return fig
 
-def create_injury_vehicle_bar_chart(df_filtered):
-    """
-    Generates a Plotly Bar Chart showing total injuries summed up by Vehicle Type.
-    
-    Args:
-        df_filtered (pd.DataFrame): The data subset after filtering.
-        
-    Returns:
-        plotly.graph_objects.Figure: The interactive Plotly chart object.
-    """
-    if df_filtered.empty:
-        return px.bar(title="No Data to Display")
+def create_heatmap(df):
+    """Heatmap: Hour vs Month."""
+    if df.empty or 'CRASH_HOUR' not in df.columns: return empty_fig()
+    data = df.groupby(['CRASH_MONTH', 'CRASH_HOUR']).size().reset_index(name='COUNT')
+    fig = px.density_heatmap(data, x='CRASH_HOUR', y='CRASH_MONTH', z='COUNT', 
+                             title="Heatmap: Month vs Hour", color_continuous_scale='Viridis')
+    fig.update_layout(template=TEMPLATE)
+    return fig
 
-    # Group by Vehicle Type and sum the number of injured persons
-    injury_counts = df_filtered.groupby('VEHICLE TYPE CODE 1')['NUMBER OF PERSONS INJURED'].sum().reset_index()
-    injury_counts.columns = ['Vehicle Type', 'Total Injuries']
-    
-    # Sort and take the top 10 for clarity on the chart
-    injury_counts = injury_counts.sort_values(by='Total Injuries', ascending=False).head(10)
-
-    fig = px.bar(
-        injury_counts, 
-        x='Vehicle Type', 
-        y='Total Injuries', 
-        color='Vehicle Type',
-        title='Top 10 Total Injuries by Vehicle Type',
-        labels={'Total Injuries': 'Sum of Injured Persons', 'Vehicle Type': 'Vehicle Type Code'},
-        template='plotly_white'
-    )
-    
-    fig.update_layout(
-        font_family="Inter",
-        title_font_size=20,
-        margin=dict(l=20, r=20, t=50, b=20),
-        xaxis={'categoryorder':'total descending'}
-    )
-    
+def create_map(df):
+    """Map: Crash Locations (Sampled)."""
+    if df.empty or 'LATITUDE' not in df.columns: return empty_fig("No Location Data")
+    # Sample 2000 points
+    data = df.dropna(subset=['LATITUDE', 'LONGITUDE']).head(2000)
+    fig = px.scatter_mapbox(data, lat='LATITUDE', lon='LONGITUDE', color='NUMBER OF PERSONS INJURED',
+                            zoom=9, mapbox_style="open-street-map", title="Crash Locations")
+    fig.update_layout(template=TEMPLATE, margin={"r":0,"t":40,"l":0,"b":0})
     return fig
