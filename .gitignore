@@ -3,6 +3,9 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+
+app/Components/Visuals/merged_crashes.csv
+
 # C extensions
 *.so
 
