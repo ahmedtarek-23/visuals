@@ -126,7 +126,8 @@ def create_line(df):
     """
     try:
         dff = df.copy()
-                
+        
+        
         # Option 1: Try to use date column for monthly/daily trends
         date_columns = ['CRASH DATE', 'CRASH_DATE', 'Date', 'date']
         date_col = None
