@@ -48,7 +48,19 @@ app.layout = dbc.Container([
                     dbc.Button("Generate Report", id="btn-gen", color="success", className="me-2"),
                     dbc.Button("Reset", id="btn-reset", color="secondary")
                 ], md=4, className="d-flex align-items-center")
-            ])
+            ]),
+            dbc.Row([
+             dbc.Col([
+               dbc.Label("Search", className="fw-bold"),
+                 dcc.Input(
+                 id="search-input",
+                 type="text",
+                 placeholder="Type to search...",
+                 debounce=True,  # triggers callback after user stops typing
+                style={"width": "100%"}
+              )], md=4, className="mb-3"),
+           ])
+            
         ])
     ], className="mb-4"),
 
@@ -81,7 +93,9 @@ app.layout = dbc.Container([
     Output('Demographic-dropdown', 'value'),
     Output('Vehicle-dropdown', 'value'),
     Output('Factor-dropdown', 'value'),
-    Output('year-slider', 'value')
+    Output('year-slider', 'value'),
+    Output('search-input', 'value')
+
     ],
 
     [
@@ -89,7 +103,7 @@ app.layout = dbc.Container([
     ]
 )
 def reset_filters(n):
-     return None, None , None , None, 2023
+     return None, None , None , None, 2023 , ""
 
 @app.callback(
     [
@@ -111,15 +125,23 @@ def reset_filters(n):
         State('Demographic-dropdown', 'value'),
         State('Vehicle-dropdown', 'value'),
         State('Factor-dropdown', 'value'),
-        State('year-slider', 'value')
+        State('year-slider', 'value'),
+        State('search-input', 'value')
     ]
 )
-def update_dashboard(n, bor, demo, veh, fac, year_slider):
+def update_dashboard(n, bor, demo, veh, fac, year_slider, search_text):
 
     # Filter data
     inputs = {'borough': bor, 'factor1': fac , 'vehicle1': veh  ,'year': year_slider, 'demographic': demo}
     dff = DataLoader.filter_dataframe(df, inputs)
     
+    
+    if search_text:
+        search_text = search_text.lower()
+        # Example: search in borough, vehicle, and factor columns
+        search_cols = ['BOROUGH', 'VEHICLE TYPE CODE 1', 'CONTRIBUTING FACTOR VEHICLE 1']
+        dff = dff[dff[search_cols].apply(lambda row: row.astype(str).str.lower().str.contains(search_text).any(), axis=1)]
+
     # Stats
     s1, s2, s3, s4 = charts.get_stats(dff)
 
