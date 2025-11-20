@@ -13,14 +13,20 @@ DARK_THEME  = dbc.themes.DARKLY
 
 # --- Components Helper ---
 def make_dropdown(label, id, col):
-    return dbc.Col([
-        dbc.Label(label, className="fw-bold"),
-        dcc.Dropdown(id=id, options=DataLoader.get_options(df, col), placeholder="All")
-    ], md=4, className="mb-3" )
+    return dbc.Col(
+        children=[
+            dbc.Label(label, className="fw-bold"),
+            dcc.Dropdown(id=id, options=DataLoader.get_options(df, col), placeholder="All")
+        ],
+        md=4,
+        className="mb-3"
+    )
 
 # --- Layout ---
 app.layout = dbc.Container([
-    dbc.NavbarSimple(brand="NYC Traffic Crashes Dashboard", color="dark", dark=True, className="mb-4"),
+
+
+    dbc.NavbarSimple(brand="NYC Traffic Crashes Dashboard", color="dark", dark=True, className="mb-4" ),
     
     # Filters Section (7 Filters as requested)
     dbc.Card([
@@ -85,43 +91,45 @@ app.layout = dbc.Container([
 def reset_filters(n):
      return None, None , None , None, 2023
 
-@app.callback([
-     Output('C-Crash', 'children'), 
-     Output('C-Injuries', 'children'), 
-     Output('C-Fatalities', 'children'), 
-     Output('C-average', 'children'),
-     Output('Bar_chart', 'figure'), 
-     Output('Pie_chart', 'figure'), 
-     Output('line_graph', 'figure'), 
-     Output('heat_map', 'figure'), 
-     Output('Map', 'figure')     
-     ],
-     [
-     Input('btn-gen', 'n_clicks')
- 
-     ],
-
+@app.callback(
     [
-     State('Borough-dropdown', 'value'), 
-     State('Demographic-dropdown', 'value'),
-     State('Vehicle-dropdown', 'value'),
-     State('Factor-dropdown', 'value'),
-     State('year-slider', 'value')
+        Output('C-Crash', 'children'), 
+        Output('C-Injuries', 'children'), 
+        Output('C-Fatalities', 'children'), 
+        Output('C-average', 'children'),
+        Output('Bar_chart', 'figure'), 
+        Output('Pie_chart', 'figure'), 
+        Output('line_graph', 'figure'), 
+        Output('heat_map', 'figure'), 
+        Output('Map', 'figure'),
+    ],
+    [
+        Input('btn-gen', 'n_clicks'),
+    ],
+    [
+        State('Borough-dropdown', 'value'), 
+        State('Demographic-dropdown', 'value'),
+        State('Vehicle-dropdown', 'value'),
+        State('Factor-dropdown', 'value'),
+        State('year-slider', 'value')
     ]
 )
-def update(n, bor , demo,fac, veh , year_slider):
+def update_dashboard(n, bor, demo, veh, fac, year_slider):
+
+    # Filter data
     inputs = {'borough': bor, 'factor1': fac , 'vehicle1': veh  ,'year': year_slider, 'demographic': demo}
-    
-    # Filter
     dff = DataLoader.filter_dataframe(df, inputs)
     
     # Stats
     s1, s2, s3, s4 = charts.get_stats(dff)
-    
-    # Charts
+
+    # Charts with template
     return s1, s2, s3, s4, \
            charts.create_bar(dff), charts.create_pie(dff), \
            charts.create_line(dff), charts.create_heatmap(dff), charts.create_map(dff)
 
+
+
 if __name__ == '__main__':
     app.run(debug=True, port=8050)
+
