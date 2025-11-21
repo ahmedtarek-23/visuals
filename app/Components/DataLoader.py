@@ -3,24 +3,27 @@ import pandas as pd
 
 def load_data():
     
-    # URL of the CSV file in Google Cloud Storage
-    file_url = "https://storage.googleapis.com/crashes_datadet/merged_crashes.csv"
-    
     try:
-        print(f"Loading data from: {file_url}")
-        df = pd.read_csv(file_url, low_memory=False)
-        print(f"SUCCESS: Loaded {len(df)} rows.")
+        # For deployment, use a smaller sample or aggregated data
+        file_url = "https://storage.googleapis.com/crashes_datadet/merged_crashes.csv"
+        print("Loading optimized dataset...")
         
-        # Process date/time columns
+        # Load only first 10,000 rows for deployment
+        df = pd.read_csv(file_url, low_memory=False, nrows=10000)
+        
+        print(f"Loaded {len(df)} rows (optimized for deployment)")
+        
+        # Minimal processing
         if 'CRASH_DATETIME' in df.columns:
             df['CRASH_DATETIME'] = pd.to_datetime(df['CRASH_DATETIME'])
             df['CRASH_MONTH'] = df['CRASH_DATETIME'].dt.month
             df['CRASH_HOUR'] = df['CRASH_DATETIME'].dt.hour
         
         return df
-    
+        
     except Exception as e:
         print(f"ERROR: {e}")
+        # Return empty dataframe as fallback
         return pd.DataFrame()
     
 # --- Filtering Functions ---
