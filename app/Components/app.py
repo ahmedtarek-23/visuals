@@ -8,6 +8,9 @@ import pandas as pd
 # Initialize
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.DARKLY , "/assets/styles.css"])
 
+#Initialize server for deployment
+server = app.server
+
 #Loading the data
 df = DataLoader.load_data()
 
@@ -292,5 +295,5 @@ def download_csv(n_clicks, bor, fac,  demo, year, search_text):
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=8050)
+    app.run(debug=True,host="0.0.0.0", port=8050)
 
