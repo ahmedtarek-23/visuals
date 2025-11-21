@@ -11,7 +11,6 @@ def load_data():
         file_url = "https://storage.googleapis.com/crashes_datadet/merged_crashes.csv"
         print("Loading optimized dataset...")
         
-        # Load only first 10,000 rows for deployment
         df = pd.read_csv(file_url, low_memory=False, nrows=10000)
         
         print(f"Loaded {len(df):,} rows (optimized for deployment)")
@@ -23,7 +22,6 @@ def load_data():
             df['CRASH_HOUR'] = df['CRASH_DATETIME'].dt.hour
             df['CRASH_YEAR'] = df['CRASH_DATETIME'].dt.year  # Added for year filtering
         
-        # Clean text columns by stripping whitespace
         text_columns = ['BOROUGH', 'CONTRIBUTING FACTOR VEHICLE 1', 'CONTRIBUTING FACTOR VEHICLE 2', 
                        'VEHICLE TYPE CODE 1', 'VEHICLE TYPE CODE 2', 'MOST_COMMON_SEX']
         for col in text_columns:

@@ -243,30 +243,28 @@ def create_vehicle_analysis(df):
 # ============================================================================
 # NEW CHART 4: PERSON TYPE DISTRIBUTION - DRIVER/PASSENGER/PEDESTRIAN
 # ============================================================================
-
 def create_person_type_pie(df):
     """
-    Person Type Distribution: Shows breakdown of crash involvement by person type.
-    Categories: Driver, Passenger, Pedestrian, Cyclist, etc.
+    Borough Distribution: Shows percentage of crashes by borough.
     """
     try:
-        if df.empty or 'PERSON_TYPE' not in df.columns:
-            return empty_fig("Missing Person Type data")
+        if df.empty or 'BOROUGH' not in df.columns:
+            return empty_fig("Missing Borough data")
         
-        # Count occurrences of each person type
-        person_type_data = df['PERSON_TYPE'].value_counts().reset_index()
-        person_type_data.columns = ['Person Type', 'Count']
+        # Count crashes by borough
+        borough_data = df['BOROUGH'].value_counts().reset_index()
+        borough_data.columns = ['Borough', 'Count']
         
-        if person_type_data.empty:
-            return empty_fig("No person type data available")
+        if borough_data.empty:
+            return empty_fig("No borough data available")
         
         # Create pie chart
         fig = px.pie(
-            person_type_data,
-            names='Person Type',
+            borough_data,
+            names='Borough',
             values='Count',
-            title='Distribution of Person Types in Crashes',
-            hole=0.4,  # Donut chart
+            title='Distribution of Crashes by Borough',
+            hole=0.4,
             color_discrete_sequence=px.colors.qualitative.Set2
         )
         
@@ -285,8 +283,9 @@ def create_person_type_pie(df):
         
     except Exception as e:
         print(f"Error in create_person_type_pie: {e}")
-        return empty_fig(f"Error generating person type chart: {str(e)}")
-
+        return empty_fig(f"Error generating borough distribution: {str(e)}")
+        
+       
 
 # --- Heatmap Creation Functions ---
 def create_empty_heatmap(message):
