@@ -1,8 +1,8 @@
 import dash
 import dash_bootstrap_components as dbc
 from dash import html, dcc, Input, Output, State
-from DataLoader import load_data, get_options, filter_dataframe 
-from charts import create_bar, create_pie, create_heatmap, create_map, create_line, get_stats
+from .DataLoader import load_data, get_options, filter_dataframe 
+from .charts import create_bar, create_pie, create_heatmap, create_map, create_line, get_stats
 import pandas as pd
 import os
 # Initialize
