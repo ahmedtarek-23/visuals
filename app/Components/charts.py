@@ -19,23 +19,25 @@ def empty_fig(text="No Data"):
 
 # --- Stats Calculation function ---
 def get_stats(df):
-
-    # If the dataframe is empty, return zeros
-    if df.empty: return "0", "0", "0", "0"
-    
+    """
+    Returns dashboard stats: total crashes, injuries, fatalities, avg persons involved.
+    Safe for empty DataFrames.
+    """
+    if df.empty:
+        return "0", "0", "0", "0.0"
 
     crashes = len(df)
+
     injuries = df['NUMBER OF PERSONS INJURED'].sum() if 'NUMBER OF PERSONS INJURED' in df.columns else 0
-    
-    # Summing all fatality columns
+
     fatality_cols = ['NUMBER OF PEDESTRIANS KILLED', 'NUMBER OF CYCLIST KILLED', 'NUMBER OF MOTORIST KILLED']
-    fatalities = df[fatality_cols].sum().sum() if all(c in df.columns for c in fatality_cols) else 0
-    
-    #Averaging people involved if the column exists
+    existing_fatality_cols = [c for c in fatality_cols if c in df.columns]
+    fatalities = df[existing_fatality_cols].sum().sum() if existing_fatality_cols else 0
+
     avg_people = df['PERSONS_INVOLVED_COUNT'].mean() if 'PERSONS_INVOLVED_COUNT' in df.columns else 0
-    
 
     return f"{crashes:,}", f"{int(injuries):,}", f"{int(fatalities):,}", f"{avg_people:.1f}"
+
 
 # --- Bar chart Creation Functions ---
 def create_bar(df):
