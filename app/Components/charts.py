@@ -66,6 +66,228 @@ def create_pie(df):
 
     return fig
 
+# ============================================================================
+# NEW CHART 1: BOX PLOT - INJURY DISTRIBUTION STATISTICS
+# ============================================================================
+
+def create_boxplot(df):
+    """
+    Box Plot: Distribution of injuries per crash by borough.
+    Shows quartiles, median, and outliers.
+    """
+    try:
+        if df.empty or 'BOROUGH' not in df.columns or 'NUMBER OF PERSONS INJURED' not in df.columns:
+            return empty_fig("Missing Borough or Injury data")
+        
+        dff = df.dropna(subset=['BOROUGH', 'NUMBER OF PERSONS INJURED']).copy()
+        
+        if dff.empty:
+            return empty_fig("No valid data for box plot")
+        
+        fig = px.box(
+            dff,
+            x='BOROUGH',
+            y='NUMBER OF PERSONS INJURED',
+            title='Distribution of Injuries per Crash by Borough',
+            points='outliers',
+            color='BOROUGH'
+        )
+        
+        fig.update_layout(
+            xaxis_title="Borough",
+            yaxis_title="Number of Injured Persons",
+            height=500,
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font_color="#E6EEF6",
+            hovermode='closest'
+        )
+        
+        return fig
+        
+    except Exception as e:
+        print(f"Error in create_boxplot: {e}")
+        return empty_fig(f"Error generating box plot: {str(e)}")
+
+
+# ============================================================================
+# NEW CHART 2: STACKED BAR - INJURIES VS FATALITIES BY BOROUGH
+# ============================================================================
+
+def create_stacked_bar(df):
+    """
+    Stacked Bar Chart: Comparing injuries and fatalities by borough.
+    Shows the total impact of crashes in each borough.
+    """
+    try:
+        if df.empty or 'BOROUGH' not in df.columns:
+            return empty_fig("Missing Borough data")
+        
+        # Check for injury column
+        injury_col = 'NUMBER OF PERSONS INJURED'
+        if injury_col not in df.columns:
+            return empty_fig(f"Missing {injury_col} column")
+        
+        # Aggregate injuries and fatalities by borough
+        stacked_data = df.groupby('BOROUGH').agg({
+            'NUMBER OF PERSONS INJURED': 'sum',
+            'NUMBER OF PEDESTRIANS KILLED': 'sum',
+            'NUMBER OF CYCLIST KILLED': 'sum',
+            'NUMBER OF MOTORIST KILLED': 'sum'
+        }).reset_index()
+        
+        # Combine all fatality columns
+        stacked_data['TOTAL FATALITIES'] = (
+            stacked_data['NUMBER OF PEDESTRIANS KILLED'] +
+            stacked_data['NUMBER OF CYCLIST KILLED'] +
+            stacked_data['NUMBER OF MOTORIST KILLED']
+        )
+        
+        # Create stacked bar chart
+        fig = go.Figure(data=[
+            go.Bar(
+                x=stacked_data['BOROUGH'],
+                y=stacked_data['NUMBER OF PERSONS INJURED'],
+                name='Injured',
+                marker_color='rgb(255, 165, 0)',  # Orange
+                hovertemplate='<b>%{x}</b><br>Injured: %{y:,}<extra></extra>'
+            ),
+            go.Bar(
+                x=stacked_data['BOROUGH'],
+                y=stacked_data['TOTAL FATALITIES'],
+                name='Killed',
+                marker_color='rgb(178, 34, 34)',  # Dark Red
+                hovertemplate='<b>%{x}</b><br>Killed: %{y:,}<extra></extra>'
+            )
+        ])
+        
+        fig.update_layout(
+            barmode='stack',
+            title='Injuries vs Fatalities by Borough',
+            xaxis_title='Borough',
+            yaxis_title='Count',
+            height=500,
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font_color="#E6EEF6",
+            hovermode='x unified'
+        )
+        
+        return fig
+        
+    except Exception as e:
+        print(f"Error in create_stacked_bar: {e}")
+        return empty_fig(f"Error generating stacked bar: {str(e)}")
+
+
+# ============================================================================
+# NEW CHART 3: VEHICLE TYPE ANALYSIS - TOP VEHICLE TYPES
+# ============================================================================
+
+def create_vehicle_analysis(df):
+    """
+    Vehicle Type Analysis: Shows top 10 vehicle types involved in crashes.
+    Displays crash count and total injuries for each vehicle type.
+    """
+    try:
+        if df.empty or 'VEHICLE TYPE CODE 1' not in df.columns:
+            return empty_fig("Missing Vehicle Type data")
+        
+        # Count crashes by vehicle type and sum injuries
+        vehicle_data = df.groupby('VEHICLE TYPE CODE 1').agg({
+            'COLLISION_ID': 'count',  # Crash count
+            'NUMBER OF PERSONS INJURED': 'sum'  # Total injuries
+        }).reset_index()
+        
+        vehicle_data.columns = ['Vehicle Type', 'Crash Count', 'Total Injuries']
+        
+        # Sort by crash count and get top 10
+        vehicle_data = vehicle_data.sort_values('Crash Count', ascending=False).head(10)
+        
+        if vehicle_data.empty:
+            return empty_fig("No vehicle data available")
+        
+        # Create bar chart with dual y-axis info in hover
+        fig = px.bar(
+            vehicle_data,
+            x='Vehicle Type',
+            y='Crash Count',
+            color='Total Injuries',
+            title='Top 10 Vehicle Types Involved in Crashes',
+            labels={'Crash Count': 'Number of Crashes', 'Total Injuries': 'Total Injuries'},
+            color_continuous_scale='Reds'
+        )
+        
+        fig.update_layout(
+            xaxis_tickangle=-45,
+            xaxis_title="Vehicle Type",
+            yaxis_title="Number of Crashes",
+            height=500,
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font_color="#E6EEF6",
+            hovermode='x unified'
+        )
+        
+        fig.update_traces(
+            hovertemplate='<b>%{x}</b><br>Crashes: %{y:,}<br>Injuries: %{marker.color:,}<extra></extra>'
+        )
+        
+        return fig
+        
+    except Exception as e:
+        print(f"Error in create_vehicle_analysis: {e}")
+        return empty_fig(f"Error generating vehicle analysis: {str(e)}")
+
+
+# ============================================================================
+# NEW CHART 4: PERSON TYPE DISTRIBUTION - DRIVER/PASSENGER/PEDESTRIAN
+# ============================================================================
+
+def create_person_type_pie(df):
+    """
+    Person Type Distribution: Shows breakdown of crash involvement by person type.
+    Categories: Driver, Passenger, Pedestrian, Cyclist, etc.
+    """
+    try:
+        if df.empty or 'PERSON_TYPE' not in df.columns:
+            return empty_fig("Missing Person Type data")
+        
+        # Count occurrences of each person type
+        person_type_data = df['PERSON_TYPE'].value_counts().reset_index()
+        person_type_data.columns = ['Person Type', 'Count']
+        
+        if person_type_data.empty:
+            return empty_fig("No person type data available")
+        
+        # Create pie chart
+        fig = px.pie(
+            person_type_data,
+            names='Person Type',
+            values='Count',
+            title='Distribution of Person Types in Crashes',
+            hole=0.4,  # Donut chart
+            color_discrete_sequence=px.colors.qualitative.Set2
+        )
+        
+        fig.update_traces(
+            textinfo='percent+label',
+            hovertemplate='<b>%{label}</b><br>Count: %{value:,}<br>Percentage: %{percent}<extra></extra>'
+        )
+        
+        fig.update_layout(
+            height=500,
+            paper_bgcolor="rgba(0,0,0,0)",
+            font_color="#E6EEF6"
+        )
+        
+        return fig
+        
+    except Exception as e:
+        print(f"Error in create_person_type_pie: {e}")
+        return empty_fig(f"Error generating person type chart: {str(e)}")
+
+
 # --- Heatmap Creation Functions ---
 def create_empty_heatmap(message):
     """Create an empty heatmap with error message"""
@@ -332,7 +554,6 @@ def create_year_based_line(df, year_col):
     
     return fig
 
-# --- Empty line chart function ---
 def create_empty_line(message):
     """Create empty line chart with message"""
     fig = go.Figure()
