@@ -1,8 +1,21 @@
+<<<<<<< HEAD
 import dash
 import dash_bootstrap_components as dbc
 
 from charts import Bar_chart, Pie_chart
 from DataLoader import load_data, Brough_options, CRASH_YEAR, Contributing_Factor1, Contributing_Factor2, Vehicle1, Vehicle2, Injury
+=======
+from dash.dependencies import Input, Output, State
+import dash
+import plotly.express as px
+
+from dash import dcc, html
+import dash_bootstrap_components as dbc
+
+from charts import Bar_chart, Pie_chart
+# FIXED: Updated imports to match DataLoader.py
+from DataLoader import load_data, Borough_options, CRASH_YEAR, Contributing_Factor1, Contributing_Factor2, Vehicle1, Vehicle2, Demographic_Options
+>>>>>>> 2578d97bd5cb1d8a7481b4701ed58e89af6a41af
 
 df = load_data()  # now your app can use df anywhere
 
@@ -15,10 +28,18 @@ app.layout = html.Div([
     dbc.Container([
 
         dbc.Row([
+<<<<<<< HEAD
             dcc.Dropdown(id="my-BroughDropdown",
                          options=[{"label": "All", "value": "ALL"},
                                   {"label": "None", "value": "NONE"}] +
                                  [{"label": b, "value": b} for b in Brough_options],
+=======
+            # FIXED: ID and Options variable name corrected
+            dcc.Dropdown(id="my-BoroughDropdown",
+                         options=[{"label": "All", "value": "ALL"},
+                                  {"label": "None", "value": "NONE"}] +
+                                 [{"label": b, "value": b} for b in Borough_options],
+>>>>>>> 2578d97bd5cb1d8a7481b4701ed58e89af6a41af
                          placeholder="Select Borough....",
                          multi=False,
                          style={"width": "200px"}),
@@ -65,11 +86,20 @@ app.layout = html.Div([
                          multi=False,
                          style={"width": "200px"}),
 
+<<<<<<< HEAD
             dcc.Dropdown(id="Injury_dropdown",
                          options=[{"label": "All", "value": "ALL"},
                                   {"label": "None", "value": "NONE"}] +
                                  [{"label": i, "value": i} for i in Injury],
                          placeholder="Select Injury Type....",
+=======
+            # FIXED: Variable name updated to Demographic_Options
+            dcc.Dropdown(id="Injury_dropdown",
+                         options=[{"label": "All", "value": "ALL"},
+                                  {"label": "None", "value": "NONE"}] +
+                                 [{"label": i, "value": i} for i in Demographic_Options],
+                         placeholder="Select Demographic (Sex)....",
+>>>>>>> 2578d97bd5cb1d8a7481b4701ed58e89af6a41af
                          multi=False,
                          style={"width": "200px"}),
         ], className="Rows 2"),
@@ -85,6 +115,7 @@ app.layout = html.Div([
 
         html.Div(id="output")
 
+<<<<<<< HEAD
 ], fluid=True)
 
 # --- Callbacks ---
@@ -102,6 +133,11 @@ app.layout = html.Div([
 )
 def reset_filters(n):
      return None, None , None , None, 2023
+=======
+    ], fluid=True)
+
+])
+>>>>>>> 2578d97bd5cb1d8a7481b4701ed58e89af6a41af
 
 @app.callback(
     [
@@ -109,7 +145,11 @@ def reset_filters(n):
         Output('pie-chart', 'figure'),
     ],
     Input('generate-report-button', 'n_clicks'),
+<<<<<<< HEAD
     State("my-BroughDropdown", "value"),
+=======
+    State("my-BoroughDropdown", "value"), # FIXED: State ID match
+>>>>>>> 2578d97bd5cb1d8a7481b4701ed58e89af6a41af
     State("year-dropdown", "value"),
     State("Controbuting1_Dropdown", "value"),
     State("Controbuting2_Dropdown", "value"),
@@ -119,7 +159,11 @@ def reset_filters(n):
 )
 def update_charts(n_clicks, selected_boroughs, selected_year,
                   Selected_Contributing1, Selected_Contributing2,
+<<<<<<< HEAD
                   Selected_Vehicle1, Selected_Vehicle2, Selected_Injury):
+=======
+                  Selected_Vehicle1, Selected_Vehicle2, Selected_Demographic): # FIXED variable name
+>>>>>>> 2578d97bd5cb1d8a7481b4701ed58e89af6a41af
 
     if n_clicks == 0:
         return dash.no_update
@@ -168,12 +212,22 @@ def update_charts(n_clicks, selected_boroughs, selected_year,
     else:
         df_filtered = df_filtered[df_filtered["VEHICLE TYPE CODE 2"] == Selected_Vehicle2]
 
+<<<<<<< HEAD
     if Selected_Injury == "ALL":
         pass
     elif Selected_Injury == "NONE":
         pass
     else:
         df_filtered = df_filtered[df_filtered["PERSON_INJURY"] == Selected_Injury]
+=======
+    if Selected_Demographic == "ALL":
+        pass
+    elif Selected_Demographic == "NONE":
+        pass
+    else:
+        # FIXED: Use correct column MOST_COMMON_SEX instead of PERSON_INJURY
+        df_filtered = df_filtered[df_filtered["MOST_COMMON_SEX"] == Selected_Demographic]
+>>>>>>> 2578d97bd5cb1d8a7481b4701ed58e89af6a41af
 
     # If df_filtered is empty, return empty figures
     if df_filtered.empty:
@@ -186,4 +240,8 @@ def update_charts(n_clicks, selected_boroughs, selected_year,
 
 
 if __name__ == "__main__":
+<<<<<<< HEAD
     app.run(debug=True)
+=======
+    app.run(debug=True)
+>>>>>>> 2578d97bd5cb1d8a7481b4701ed58e89af6a41af
