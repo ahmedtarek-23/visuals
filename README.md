@@ -379,5 +379,3 @@ For questions, issues, or suggestions, please open an issue in the repository.
 - CSV export functionality
 
 ---
-
-**Last Updated:** November 2025
