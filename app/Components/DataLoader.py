@@ -9,7 +9,7 @@ def load_data():
         print("Loading optimized dataset...")
         
         # Load only first 10,000 rows for deployment
-        df = pd.read_csv(file_url, low_memory=False, nrows=10000)
+        df = pd.read_csv(file_url, low_memory=False, nrows=300)
         
         print(f"Loaded {len(df)} rows (optimized for deployment)")
         
