@@ -2,7 +2,10 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import html, dcc, Input, Output, State
 from .DataLoader import load_data, get_options, filter_dataframe 
-from .charts import create_bar, create_pie, create_heatmap, create_map, create_line, get_stats
+from .charts import (
+    create_bar, create_pie, create_heatmap, create_map, create_line, get_stats,
+    create_boxplot, create_stacked_bar, create_vehicle_analysis, create_person_type_pie
+)
 import pandas as pd
 
 # Initialize
@@ -105,7 +108,7 @@ app.layout = dbc.Container([
         dbc.Col(dbc.Card([dbc.CardBody([html.H3(id="C-average"), html.P("Avg Persons Involved")])], color="info", inverse=True,className="hover-pop")),
     ], className="mb-4"),
 
-    # Grid Charts
+    # ===== ORIGINAL 5 CHARTS =====
     dbc.Row([
         dbc.Col(dcc.Graph(id="Bar_chart" , className="hover-pop"), md=6),
         dbc.Col(dcc.Graph(id="Pie_chart", className="hover-pop"), md=6),
@@ -116,9 +119,23 @@ app.layout = dbc.Container([
     ], className="mb-4"),
     
     dbc.Row([
-    dbc.Col(dcc.Graph(id="Map" , className="hover-pop"), md=6),
-    dbc.Col(dcc.Graph(id="heat_map" , className="hover-pop"), md=6)
-])
+        dbc.Col(dcc.Graph(id="Map" , className="hover-pop"), md=6),
+        dbc.Col(dcc.Graph(id="heat_map" , className="hover-pop"), md=6)
+    ], className="mb-4"),
+
+    # ===== NEW 4 CHARTS =====
+    html.Hr(),
+    html.H4("Advanced Analysis", className="mt-4 mb-3"),
+    
+    dbc.Row([
+        dbc.Col(dcc.Graph(id="boxplot_chart" , className="hover-pop"), md=6),
+        dbc.Col(dcc.Graph(id="stacked_bar_chart", className="hover-pop"), md=6),
+    ], className="mb-4"),
+    
+    dbc.Row([
+        dbc.Col(dcc.Graph(id="vehicle_chart" , className="hover-pop"), md=6),
+        dbc.Col(dcc.Graph(id="person_type_chart", className="hover-pop"), md=6)
+    ], className="mb-4"),
     
 ], fluid=True)
  
@@ -219,7 +236,7 @@ def apply_search_filter(dataframe, search_text):
 def reset_filters(n):
      return None, None  , None, 2023 , ""
 
-#Callback to update dashboard
+#Callback to update dashboard with ALL 9 CHARTS
 @app.callback(
     [
         Output('C-Crash', 'children'), 
@@ -231,6 +248,10 @@ def reset_filters(n):
         Output('line_graph', 'figure'), 
         Output('heat_map', 'figure'), 
         Output('Map', 'figure'),
+        Output('boxplot_chart', 'figure'),
+        Output('stacked_bar_chart', 'figure'),
+        Output('vehicle_chart', 'figure'),
+        Output('person_type_chart', 'figure'),
     ],
     [
         Input('btn-gen', 'n_clicks'),
@@ -257,10 +278,12 @@ def update_dashboard(n, bor, demo, fac, year_slider, search_text):
     # Getting stats
     s1, s2, s3, s4 = get_stats(dff)
 
-    # Charts with template
+    # Charts with template - ORIGINAL 5 + NEW 4
     return s1, s2, s3, s4, \
            create_bar(dff), create_pie(dff), \
-           create_line(dff), create_heatmap(dff), create_map(dff)
+           create_line(dff), create_heatmap(dff), create_map(dff), \
+           create_boxplot(dff), create_stacked_bar(dff), \
+           create_vehicle_analysis(dff), create_person_type_pie(dff)
 
 # --- Download Callback ---
 @app.callback(
@@ -296,4 +319,3 @@ def download_csv(n_clicks, bor, fac,  demo, year, search_text):
 
 if __name__ == '__main__':
     app.run(debug=True, port=8050)
-
