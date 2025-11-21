@@ -3,6 +3,7 @@ import pandas as pd
 
 def load_data():
     
+    # URL of the CSV file in Google Cloud Storage
     file_url = "https://storage.googleapis.com/crashes_datadet/merged_crashes.csv"
     
     try:

@@ -1,7 +1,7 @@
 import dash
 import dash_bootstrap_components as dbc
 from dash import html, dcc, Input, Output, State
-from DataLoader import load_data, get_options, filter_dataframe 
+from .DataLoader import load_data, get_options, filter_dataframe 
 import charts
 import pandas as pd
 
