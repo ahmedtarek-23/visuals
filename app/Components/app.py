@@ -1,10 +1,10 @@
 import dash
 import dash_bootstrap_components as dbc
 from dash import html, dcc, Input, Output, State
-from .DataLoader import load_data, get_options, filter_dataframe 
-from .charts import create_bar, create_pie, create_heatmap, create_map, create_line, get_stats
+from DataLoader import load_data, get_options, filter_dataframe 
+from charts import create_bar, create_pie, create_heatmap, create_map, create_line, get_stats
 import pandas as pd
-
+import os
 # Initialize
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.DARKLY , "/assets/styles.css"])
 
@@ -295,5 +295,5 @@ def download_csv(n_clicks, bor, fac,  demo, year, search_text):
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=8050)
-
+    port = int(os.environ.get("PORT", 8050))
+    app.run(host="0.0.0.0", port=port, debug=False)

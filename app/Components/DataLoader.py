@@ -2,24 +2,25 @@ import pandas as pd
 
 
 def load_data():
-    
     try:
-        # For deployment, use a smaller sample or aggregated data
         file_url = "https://storage.googleapis.com/crashes_datadet/merged_crashes.csv"
-        print("Loading optimized dataset...")
-        
-        # Load only first 10,000 rows for deployment
-        df = pd.read_csv(file_url, low_memory=False, nrows=300)
-        
-        print(f"Loaded {len(df)} rows (optimized for deployment)")
-        
-        # Minimal processing
+        print("Loading full dataset...")
+
+        # Load the FULL dataset (no row limit)
+        df = pd.read_csv(file_url, low_memory=False)
+
+        print(f"Loaded {len(df)} rows (full dataset)")
+
         if 'CRASH_DATETIME' in df.columns:
-            df['CRASH_DATETIME'] = pd.to_datetime(df['CRASH_DATETIME'])
+            df['CRASH_DATETIME'] = pd.to_datetime(df['CRASH_DATETIME'], errors='coerce')
             df['CRASH_MONTH'] = df['CRASH_DATETIME'].dt.month
             df['CRASH_HOUR'] = df['CRASH_DATETIME'].dt.hour
-        
+
         return df
+
+    except Exception as e:
+        print(f"Error loading data: {e}")
+        return None
         
     except Exception as e:
         print(f"ERROR: {e}")
@@ -74,4 +75,3 @@ def filter_dataframe(df, inputs):
                 dff = dff[dff[col] == value]
                 
     return dff
-
