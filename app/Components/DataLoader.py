@@ -1,33 +1,43 @@
+
 import pandas as pd
-import os
+
+
+import pandas as pd
 
 def load_data():
-    
-    # 1. Find the folder where this script is running
-    current_folder = os.path.dirname(os.path.abspath(__file__))
-    
-    # 2. Create the full path to the CSV
-    file_path = os.path.join(current_folder,'Visuals','merged_crashes.csv')
-
-    print(f"Looking for data at: {file_path}")
-
     try:
-        df = pd.read_csv(file_path, low_memory=False)
-        print(f"SUCCESS: Loaded {len(df)} rows.")
-        
-        # Ensure date/time columns exist for the Line/Heatmap charts
+        # Deployment CSV (hosted online)
+        file_url = "https://storage.googleapis.com/crashes_datadet/reduced_file.csv"
+        print("Loading full dataset from bucket...")
+
+        # Load entire CSV
+        df = pd.read_csv(
+            file_url,
+            low_memory=False
+        )
+
+        # Convert datetime if column exists
         if 'CRASH_DATETIME' in df.columns:
-            df['CRASH_DATETIME'] = pd.to_datetime(df['CRASH_DATETIME'])
+            df['CRASH_DATETIME'] = pd.to_datetime(df['CRASH_DATETIME'], errors='coerce')
             df['CRASH_MONTH'] = df['CRASH_DATETIME'].dt.month
             df['CRASH_HOUR'] = df['CRASH_DATETIME'].dt.hour
 
+        # Convert categorical columns if they exist (optional)
+        categorical_cols = ['BOROUGH', 'CONTRIBUTING FACTOR VEHICLE 1', 'CONTRIBUTING FACTOR VEHICLE 2',
+                            'VEHICLE TYPE CODE 1', 'VEHICLE TYPE CODE 2', 'MOST_COMMON_SEX']
+        for col in categorical_cols:
+            if col in df.columns:
+                df[col] = df[col].astype('category')
+
+        print(f"✅ Loaded {len(df)} rows from the bucket")
+
         return df
-    
-    #Error handling/Debugging
-    except FileNotFoundError:
-        print(f"\n[ERROR] Could not find 'merged_crashes.csv'")
-        print(f"Please make sure the file is inside this folder: {current_folder}\n")
+
+    except Exception as e:
+        print(f"ERROR: {e}")
         return pd.DataFrame()
+
+
     
 # --- Filtering Functions ---
 def get_options(df, column_name):
@@ -77,4 +87,3 @@ def filter_dataframe(df, inputs):
                 dff = dff[dff[col] == value]
                 
     return dff
-

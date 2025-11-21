@@ -1,22 +1,25 @@
 import dash
 import dash_bootstrap_components as dbc
 from dash import html, dcc, Input, Output, State
-import DataLoader
-import charts
+from .DataLoader import load_data, get_options, filter_dataframe 
+from .charts import create_bar, create_pie, create_heatmap, create_map, create_line, get_stats
 import pandas as pd
-
+import os
 # Initialize
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.DARKLY , "/assets/styles.css"])
 
+#Initialize server for deployment
+server = app.server
+
 #Loading the data
-df = DataLoader.load_data()
+df = load_data()
 
 # --- Dropdown function ---
 def make_dropdown(label, id, col):
     return dbc.Col(
         children=[
             dbc.Label(label, className="fw-bold"),
-            dcc.Dropdown(id=id, options=DataLoader.get_options(df, col), placeholder="All")
+            dcc.Dropdown(id=id, options=get_options(df, col), placeholder="All")
         ],
         md=4,
         className="mb-3"
@@ -246,18 +249,18 @@ def update_dashboard(n, bor, demo, fac, year_slider, search_text):
     inputs = {'borough': bor, 'factor1': fac  ,'year': year_slider, 'demographic': demo}
     
     #Apply all filters
-    dff = DataLoader.filter_dataframe(df, inputs)
+    dff = filter_dataframe(df, inputs)
 
     #Apllying the searhc function filter     
     dff = apply_search_filter(dff, search_text)
      
     # Getting stats
-    s1, s2, s3, s4 = charts.get_stats(dff)
+    s1, s2, s3, s4 = get_stats(dff)
 
     # Charts with template
     return s1, s2, s3, s4, \
-           charts.create_bar(dff), charts.create_pie(dff), \
-           charts.create_line(dff), charts.create_heatmap(dff), charts.create_map(dff)
+           create_bar(dff), create_pie(dff), \
+           create_line(dff), create_heatmap(dff), create_map(dff)
 
 # --- Download Callback ---
 @app.callback(
@@ -278,7 +281,7 @@ def download_csv(n_clicks, bor, fac,  demo, year, search_text):
     # Filter dataframe
     inputs = {'borough': bor, 'factor1': fac,  'demographic': demo, 'year': year}
 
-    dff = DataLoader.filter_dataframe(df, inputs)
+    dff = filter_dataframe(df, inputs)
     dff = apply_search_filter(dff, search_text)
 
     # Apply search filter
@@ -291,6 +294,6 @@ def download_csv(n_clicks, bor, fac,  demo, year, search_text):
     return dcc.send_data_frame(dff.to_csv, "nyc_traffic_crashes.csv", index=False)
 
 
-if __name__ == '__main__':
-    app.run(debug=True, port=8050)
-
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8050))
+    app.run_server(host="0.0.0.0", port=port, debug=True)
