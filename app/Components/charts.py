@@ -106,6 +106,7 @@ def create_heatmap(df):
             # Example: Heatmap of injuries by borough and crash hour (if available)
             if 'CRASH TIME' in dff.columns:
                 dff['HOUR'] = pd.to_datetime(dff['CRASH TIME'], errors='coerce').dt.hour
+
                 pivot_data = dff.pivot_table(
                     index='BOROUGH',
                     columns='HOUR',
