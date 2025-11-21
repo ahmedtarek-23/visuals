@@ -5,7 +5,10 @@ import pandas as pd
 # Common template to fix the bug you had earlier
 TEMPLATE = "plotly_white"
 
+# --- Empty Figure function ---
 def empty_fig(text="No Data"):
+
+    # Returns an empty figure with a message
     return {
         "layout": {
             "xaxis": {"visible": False},
@@ -14,10 +17,13 @@ def empty_fig(text="No Data"):
         }
     }
 
+# --- Stats Calculation function ---
 def get_stats(df):
-    """Calculates the 4 numbers for the top cards."""
+
+    # If the dataframe is empty, return zeros
     if df.empty: return "0", "0", "0", "0"
     
+
     crashes = len(df)
     injuries = df['NUMBER OF PERSONS INJURED'].sum() if 'NUMBER OF PERSONS INJURED' in df.columns else 0
     
@@ -25,26 +31,42 @@ def get_stats(df):
     fatality_cols = ['NUMBER OF PEDESTRIANS KILLED', 'NUMBER OF CYCLIST KILLED', 'NUMBER OF MOTORIST KILLED']
     fatalities = df[fatality_cols].sum().sum() if all(c in df.columns for c in fatality_cols) else 0
     
+    #Averaging people involved if the column exists
     avg_people = df['PERSONS_INVOLVED_COUNT'].mean() if 'PERSONS_INVOLVED_COUNT' in df.columns else 0
     
+
     return f"{crashes:,}", f"{int(injuries):,}", f"{int(fatalities):,}", f"{avg_people:.1f}"
 
+# --- Bar chart Creation Functions ---
 def create_bar(df):
+
     """Bar: Total Injuries by Borough."""
     if df.empty: return empty_fig()
     data = df.groupby('BOROUGH')['NUMBER OF PERSONS INJURED'].sum().reset_index()
     fig = px.bar(data, x='BOROUGH', y='NUMBER OF PERSONS INJURED', title="Injuries by Borough")
-    fig.update_layout(template=TEMPLATE)
+    fig.update_layout(
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(0,0,0,0)",
+    font_color="#E6EEF6"
+)
+
     return fig
 
+# --- Pie chart Creation Functions ---
 def create_pie(df):
     """Pie: Top Contributing Factors."""
     if df.empty: return empty_fig()
     data = df['CONTRIBUTING FACTOR VEHICLE 1'].value_counts().head(10)
     fig = px.pie(names=data.index, values=data.values, title="Top Contributing Factors")
-    fig.update_layout(template=TEMPLATE)
+    fig.update_layout(
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(0,0,0,0)",
+    font_color="#E6EEF6"
+)
+
     return fig
 
+# --- Heatmap Creation Functions ---
 def create_empty_heatmap(message):
     """Create an empty heatmap with error message"""
     fig = go.Figure()
@@ -59,10 +81,13 @@ def create_empty_heatmap(message):
         title={
             'text': 'Crash Frequency by Time and Day',
             'x': 0.5,
-            'xanchor': 'center'
+            'xanchor': 'center',
         },
         height=500,
-        margin=dict(l=50, r=50, t=80, b=50)
+        margin=dict(l=50, r=50, t=80, b=50),
+         paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font_color="#E6EEF6"
     )
     return fig
 
@@ -103,13 +128,19 @@ def create_heatmap(df):
             title="Crash Data Heatmap"
         )
         
-        fig.update_layout(height=500)
+        fig.update_layout(
+            height=500,
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font_color="#E6EEF6"
+)
         return fig
         
     except Exception as e:
         print(f"Error in create_heatmap: {e}")
         return create_empty_heatmap("Error generating heatmap")
 
+# --- Map Creation Functions ---
 def create_map(df):
     """Map: Crash Locations (Sampled)."""
     if df.empty or 'LATITUDE' not in df.columns: return empty_fig("No Location Data")
@@ -117,9 +148,14 @@ def create_map(df):
     data = df.dropna(subset=['LATITUDE', 'LONGITUDE']).head(2000)
     fig = px.scatter_mapbox(data, lat='LATITUDE', lon='LONGITUDE', color='NUMBER OF PERSONS INJURED',
                             zoom=9, mapbox_style="open-street-map", title="Crash Locations")
-    fig.update_layout(template=TEMPLATE, margin={"r":0,"t":40,"l":0,"b":0})
+    fig.update_layout(paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(0,0,0,0)",
+    font_color="#E6EEF6",
+     margin={"r":0,"t":40,"l":0,"b":0})
+    
     return fig
 
+# --- Line chart Creation Functions ---
 def create_line(df):
     """
     Create a line chart showing crash trends over time
@@ -153,6 +189,7 @@ def create_line(df):
         traceback.print_exc()
         return create_empty_line("Error generating line chart")
 
+# ---functions for line chart ---
 def create_date_based_line(df, date_col):
     """Create line chart using date column for proper time series"""
     dff = df.copy()
@@ -225,7 +262,10 @@ def create_date_based_line(df, date_col):
         height=500,
         showlegend=False,
         margin=dict(l=60, r=50, t=80, b=80),
-        plot_bgcolor='white'
+        plot_bgcolor="rgba(0,0,0,0)",
+        font_color="#E6EEF6",
+        paper_bgcolor="rgba(0,0,0,0)",
+
     )
     
     # Rotate x-axis labels if there are many points
@@ -236,6 +276,7 @@ def create_date_based_line(df, date_col):
     
     return fig
 
+# ---functions for line chart ---
 def create_year_based_line(df, year_col):
     """Create line chart using only year column"""
     dff = df.copy()
@@ -281,7 +322,9 @@ def create_year_based_line(df, year_col):
         height=500,
         showlegend=False,
         margin=dict(l=60, r=50, t=80, b=50),
-        plot_bgcolor='white'
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font_color="#E6EEF6"
     )
     
     fig.update_xaxes(tickformat='d')
@@ -289,6 +332,7 @@ def create_year_based_line(df, year_col):
     
     return fig
 
+# --- Empty line chart function ---
 def create_empty_line(message):
     """Create empty line chart with message"""
     fig = go.Figure()
@@ -302,6 +346,8 @@ def create_empty_line(message):
     fig.update_layout(
         title={'text': 'Crash Trends', 'x': 0.5},
         height=500,
-        plot_bgcolor='white'
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font_color="#E6EEF6"
     )
     return fig

@@ -2,7 +2,7 @@ import pandas as pd
 import os
 
 def load_data():
-    """Loads the merged CSV file from the same folder as this script."""
+    
     # 1. Find the folder where this script is running
     current_folder = os.path.dirname(os.path.abspath(__file__))
     
@@ -20,15 +20,19 @@ def load_data():
             df['CRASH_DATETIME'] = pd.to_datetime(df['CRASH_DATETIME'])
             df['CRASH_MONTH'] = df['CRASH_DATETIME'].dt.month
             df['CRASH_HOUR'] = df['CRASH_DATETIME'].dt.hour
+
         return df
-        
+    
+    #Error handling/Debugging
     except FileNotFoundError:
         print(f"\n[ERROR] Could not find 'merged_crashes.csv'")
         print(f"Please make sure the file is inside this folder: {current_folder}\n")
         return pd.DataFrame()
-
+    
+# --- Filtering Functions ---
 def get_options(df, column_name):
-    """Get sorted options for dropdowns (Top 50 for performance)."""
+    
+    #Check if dataframe is empty or column does not exist
     if df.empty or column_name not in df.columns:
         return []
     
@@ -41,8 +45,10 @@ def get_options(df, column_name):
     # Return sorted top 50
     return [{'label': i, 'value': i} for i in sorted(clean_items)][:50]
 
+# --- Apply all filters function ---
 def filter_dataframe(df, inputs):
-    """Applies all 7 filters to the dataframe."""
+    
+    # Check if dataframe is empty
     if df.empty: return df
     dff = df.copy()
     
@@ -57,6 +63,7 @@ def filter_dataframe(df, inputs):
         'demographic': 'MOST_COMMON_SEX'
     }
     
+    #Looping over the dataFrame to apply filters
     for key, col in filter_map.items():
         value = inputs.get(key)
         if value and value != 'ALL' and col in dff.columns:
