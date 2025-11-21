@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 dash>=2.14.1
 pandas>=2.0.0
 plotly>=5.0.0
@@ -6,3 +7,15 @@ gunicorn>=20.1.0
 certifi>=2025.1.31
 dash-bootstrap-components>=1.4.0
 geopandas>=0.13.0
+=======
+dash>=2.14.1
+pandas>=2.0.0
+plotly>=5.0.0
+numpy>=1.21
+gunicorn>=20.1.0
+certifi>=2025.1.31
+dash-bootstrap-components>=1.4.0
+geopandas>=0.13.0
+google-cloud-storage==2.13.0
+gunicorn==21.2.0
+>>>>>>> 18c24e80010ca2dd6f3f70e6e2efeec450f51155
