@@ -1,57 +1,63 @@
-
 import pandas as pd
-
+import os
 
 def load_data():
+    """Loads data from a local Parquet or CSV file."""
+    # Get the folder where this script lives
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # Define paths (Look in the main project folder, one level up if inside 'app/Components')
+    # Adjust these paths if your file is in a different spot!
+    parquet_path = os.path.join(current_dir, '..', '..', 'merged_crashes.parquet')
+    csv_path = os.path.join(current_dir, '..', '..', 'merged_crashes.csv')
+    
+    # Fallback: Look in the same folder (if running script directly)
+    if not os.path.exists(parquet_path) and not os.path.exists(csv_path):
+        parquet_path = "merged_crashes.parquet"
+        csv_path = "merged_crashes.csv"
+
+    df = pd.DataFrame()
+
     try:
-        file_url = "https://storage.googleapis.com/crashes_datadet/merged_crashes.csv"
-        print("Loading full dataset...")
+        # 1. Try Parquet (Best for performance)
+        if os.path.exists(parquet_path):
+            print(f"Loading local Parquet: {parquet_path}...")
+            df = pd.read_parquet(parquet_path, engine='pyarrow')
+            
+        # 2. Try CSV (Fallback)
+        elif os.path.exists(csv_path):
+            print(f"Loading local CSV: {csv_path}...")
+            df = pd.read_csv(csv_path, low_memory=False)
+            
+        else:
+            print(f"❌ ERROR: No data file found at {parquet_path} or {csv_path}")
+            return pd.DataFrame()
 
-        # Load the FULL dataset (no row limit)
-        df = pd.read_csv(file_url, low_memory=False)
-
-        print(f"Loaded {len(df)} rows (full dataset)")
-
+        # 3. Standardize Date/Time
         if 'CRASH_DATETIME' in df.columns:
             df['CRASH_DATETIME'] = pd.to_datetime(df['CRASH_DATETIME'], errors='coerce')
             df['CRASH_MONTH'] = df['CRASH_DATETIME'].dt.month
             df['CRASH_HOUR'] = df['CRASH_DATETIME'].dt.hour
-
+            
+        print(f"✅ Loaded {len(df):,} rows successfully.")
         return df
 
     except Exception as e:
-        print(f"Error loading data: {e}")
-        return None
-        
-    except Exception as e:
-        print(f"ERROR: {e}")
-        # Return empty dataframe as fallback
+        print(f"❌ Error loading data: {e}")
         return pd.DataFrame()
-    
-# --- Filtering Functions ---
+
+# --- Filtering Functions (Keep these unchanged) ---
 def get_options(df, column_name):
-    
-    #Check if dataframe is empty or column does not exist
     if df.empty or column_name not in df.columns:
         return []
-    
-    # Get unique values and convert to string
     items = df[column_name].astype(str).unique()
-    
-    # Filter out nan/null strings
-    clean_items = [i for i in items if i.lower() not in ['nan', 'none', '', 'null']]
-    
-    # Return sorted top 50
+    clean_items = [i for i in items if i.lower() not in ['nan', 'none', '', 'null', 'unknown']]
     return [{'label': i, 'value': i} for i in sorted(clean_items)][:50]
 
-# --- Apply all filters function ---
 def filter_dataframe(df, inputs):
-    
-    # Check if dataframe is empty
     if df.empty: return df
     dff = df.copy()
     
-    # Map of 'Filter ID' -> 'Column Name'
     filter_map = {
         'borough': 'BOROUGH',
         'year': 'CRASH_YEAR',
@@ -62,16 +68,14 @@ def filter_dataframe(df, inputs):
         'demographic': 'MOST_COMMON_SEX'
     }
     
-    #Looping over the dataFrame to apply filters
     for key, col in filter_map.items():
         value = inputs.get(key)
         if value and value != 'ALL' and col in dff.columns:
-            # Handle numeric year vs string columns
             if key == 'year':
                 try:
                     dff = dff[dff[col] == int(value)]
                 except ValueError:
-                    pass # Ignore if year conversion fails
+                    pass
             else:
                 dff = dff[dff[col] == value]
                 
