@@ -2,7 +2,7 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import html, dcc, Input, Output, State
 from .DataLoader import load_data, get_options, filter_dataframe 
-import charts
+from .charts import create_bar, create_pie, create_heatmap, create_map, create_line, get_stats
 import pandas as pd
 
 # Initialize
@@ -255,12 +255,12 @@ def update_dashboard(n, bor, demo, fac, year_slider, search_text):
     dff = apply_search_filter(dff, search_text)
      
     # Getting stats
-    s1, s2, s3, s4 = charts.get_stats(dff)
+    s1, s2, s3, s4 = get_stats(dff)
 
     # Charts with template
     return s1, s2, s3, s4, \
-           charts.create_bar(dff), charts.create_pie(dff), \
-           charts.create_line(dff), charts.create_heatmap(dff), charts.create_map(dff)
+           create_bar(dff), create_pie(dff), \
+           create_line(dff), create_heatmap(dff), create_map(dff)
 
 # --- Download Callback ---
 @app.callback(
