@@ -294,6 +294,7 @@ def download_csv(n_clicks, bor, fac,  demo, year, search_text):
     return dcc.send_data_frame(dff.to_csv, "nyc_traffic_crashes.csv", index=False)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8050))
     app.run_server(host="0.0.0.0", port=port, debug=False)
+
