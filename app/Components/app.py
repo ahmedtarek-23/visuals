@@ -296,4 +296,4 @@ def download_csv(n_clicks, bor, fac,  demo, year, search_text):
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8050))
-    app.run(host="0.0.0.0", port=port, debug=False)
+    app.run_server(host="0.0.0.0", port=port, debug=False)
