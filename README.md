@@ -57,26 +57,22 @@ pandas
 
 ## Project Structure
 ```
-Visuals/
-│
-├── app.py                      # Main dashboard application
-├── requirements.txt            # Python dependencies
-├── README.md                   # Project documentation
-│
-├── components/
+visuals/
+├── app/
+│   ├── Components/
+│   ├── assets/
+│   │   └── style.css
+│   ├── DataLoader.py
+│   ├── Procfile
 │   ├── __init__.py
-│   ├── DataLoader.py          # Data loading and filtering functions
-│   └── charts.py              # Visualization creation functions
-│
-├── assets/
-│   └── styles.css             # Custom CSS styling
-│
-├── data/
-│   ├── raw/                   # Raw data files
-│   └── processed/             # Cleaned data files
-│
-└── notebooks/
-    └── data_cleaning.ipynb    # Data preprocessing notebooks
+│   ├── app.py
+│   ├── charts.py
+│   └── gunicorn.conf.py
+├── notebook/
+│   └── Milestone1_EDA_Cleaning.ipynb
+├── .gitignore
+├── README.md
+└── requirements.txt
 ```
 
 ## Installation
