@@ -6,45 +6,36 @@ import pandas as pd
 def load_data():
     try:
         # Deployment CSV (hosted online)
-        file_url = "https://storage.googleapis.com/crashes_datadet/merged_crashes.csv"
-        print("Loading optimized dataset...")
+        file_url = "https://storage.googleapis.com/crashes_datadet/reduced_file.csv"
+        print("Loading full dataset from bucket...")
 
-        # Specify only the columns your app actually uses
-        needed_columns = [
-            'CRASH_DATETIME', 'CRASH_YEAR', 'BOROUGH',
-            'CONTRIBUTING FACTOR VEHICLE 1', 'CONTRIBUTING FACTOR VEHICLE 2',
-            'VEHICLE TYPE CODE 1', 'VEHICLE TYPE CODE 2',
-            'MOST_COMMON_SEX',
-            'NUMBER OF PERSONS INJURED', 'NUMBER OF PERSONS KILLED'
-        ]
-
-        # Load only first 500-1000 rows (adjust based on memory)
+        # Load entire CSV
         df = pd.read_csv(
             file_url,
-            usecols=needed_columns,
-            nrows=500,        # small sample for free deploy
             low_memory=False
         )
 
-        # Convert datetime
+        # Convert datetime if column exists
         if 'CRASH_DATETIME' in df.columns:
             df['CRASH_DATETIME'] = pd.to_datetime(df['CRASH_DATETIME'], errors='coerce')
             df['CRASH_MONTH'] = df['CRASH_DATETIME'].dt.month
             df['CRASH_HOUR'] = df['CRASH_DATETIME'].dt.hour
 
-        # Convert categorical columns to category type (saves memory)
-        for col in ['BOROUGH', 'CONTRIBUTING FACTOR VEHICLE 1', 'CONTRIBUTING FACTOR VEHICLE 2',
-                    'VEHICLE TYPE CODE 1', 'VEHICLE TYPE CODE 2', 'MOST_COMMON_SEX']:
+        # Convert categorical columns if they exist (optional)
+        categorical_cols = ['BOROUGH', 'CONTRIBUTING FACTOR VEHICLE 1', 'CONTRIBUTING FACTOR VEHICLE 2',
+                            'VEHICLE TYPE CODE 1', 'VEHICLE TYPE CODE 2', 'MOST_COMMON_SEX']
+        for col in categorical_cols:
             if col in df.columns:
                 df[col] = df[col].astype('category')
 
-        print(f"✅ Loaded {len(df)} rows (optimized for deployment)")
+        print(f"✅ Loaded {len(df)} rows from the bucket")
 
         return df
 
     except Exception as e:
         print(f"ERROR: {e}")
         return pd.DataFrame()
+
 
     
 # --- Filtering Functions ---
