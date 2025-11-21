@@ -1,32 +1,25 @@
 import pandas as pd
-import os
+
 
 def load_data():
     
-    # 1. Find the folder where this script is running
-    current_folder = os.path.dirname(os.path.abspath(__file__))
+    file_url = "https://storage.googleapis.com/crashes_datadet/merged_crashes.csv"
     
-    # 2. Create the full path to the CSV
-    file_path = os.path.join(current_folder,'Visuals','merged_crashes.csv')
-
-    print(f"Looking for data at: {file_path}")
-
     try:
-        df = pd.read_csv(file_path, low_memory=False)
+        print(f"Loading data from: {file_url}")
+        df = pd.read_csv(file_url, low_memory=False)
         print(f"SUCCESS: Loaded {len(df)} rows.")
         
-        # Ensure date/time columns exist for the Line/Heatmap charts
+        # Process date/time columns
         if 'CRASH_DATETIME' in df.columns:
             df['CRASH_DATETIME'] = pd.to_datetime(df['CRASH_DATETIME'])
             df['CRASH_MONTH'] = df['CRASH_DATETIME'].dt.month
             df['CRASH_HOUR'] = df['CRASH_DATETIME'].dt.hour
-
+        
         return df
     
-    #Error handling/Debugging
-    except FileNotFoundError:
-        print(f"\n[ERROR] Could not find 'merged_crashes.csv'")
-        print(f"Please make sure the file is inside this folder: {current_folder}\n")
+    except Exception as e:
+        print(f"ERROR: {e}")
         return pd.DataFrame()
     
 # --- Filtering Functions ---
