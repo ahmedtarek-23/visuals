@@ -1,0 +1,299 @@
+/* ---- GLOBAL DARK GLASS BACKGROUND ---- */
+body {
+    background: radial-gradient(circle at top left, #1a1a1d, #0b0b0d 70%);
+    background-attachment: fixed;
+    color: #E6EEF6;
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 20px;
+}
+
+header {
+    text-align: left;       /* Aligns text to the left */
+    font-size: 2em;         /* Makes it bigger, adjust as needed */
+    font-weight: bold;      /* Optional: make it bold */
+    padding: 20px;          /* Adds spacing around it */
+}
+
+/* If using Dash/HTML H1 component */
+h1 {
+    text-align: left;
+    font-size: 2.5em;
+    margin: 20px 0;
+}
+
+/* ---- GLASS CARD ---- */
+.card, .hover-pop, .filter-section, .filter-container {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.07) !important;
+    backdrop-filter: blur(18px) !important;
+    -webkit-backdrop-filter: blur(18px) !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.55) !important;
+    border-radius: 18px !important;
+    transition: 0.25s ease !important;
+    overflow: visible !important;
+}
+
+/* Hover pop animation */
+.hover-pop:hover {
+    transform: translateY(-5px) scale(1.01) !important;
+    box-shadow: 0 16px 50px rgba(0,0,0,0.7) !important;
+}
+
+/* Card headers */
+.card-header {
+    background: rgba(255,255,255,0.05) !important;
+    border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+    font-weight: 700;
+    color: #CFE6FF;
+    padding: 15px 20px !important;
+}
+
+/* ---- FILTER SECTIONS ---- */
+.filter-section, .filter-container, [class*="filter"] {
+    padding: 20px !important;
+    margin-bottom: 20px !important;
+}
+
+.filter-section h2, .filter-section h3, .filter-section h4 {
+    color: #CFE6FF !important;
+    font-weight: 700 !important;
+    margin-bottom: 15px !important;
+    border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+    padding-bottom: 8px !important;
+}
+
+/* ---- NAVBAR FIX - LEFT ALIGNED & BIGGER ---- */
+.navbar-dark {
+    background: rgba(255, 255, 255, 0) !important;
+    backdrop-filter: blur(18px) !important;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    padding: 1rem 0 !important;
+}
+
+/* Make navbar brand left-aligned and bigger */
+.navbar-brand {
+    font-size: 1.5rem !important; /* Bigger font size */
+    font-weight: 500 !important; /* Bolder */
+    color: #CFE6FF !important;
+    margin-left: 1 !important;
+    padding-left: 1 !important;
+    text-align: left !important; /* Left aligned */
+    width: auto !important; /* Don't take full width */
+    position: static !important; /* Remove absolute positioning */
+    margin-right: auto !important; /* Push to left */
+}
+
+/* Remove any container constraints */
+.navbar .container, .navbar .container-fluid {
+    padding-left: 0 !important;
+    margin-left: 0 !important;
+    justify-content: flex-start !important; /* Align content to start */
+}
+
+/* Hide any nav items */
+.navbar-nav {
+    display: none !important;
+}
+
+/* ---- DROPDOWNS & SELECT CONTROLS ---- */
+.Select-control, .Select--single, .Select-placeholder,
+.Select-input, .Select-value, .Select-option,
+.dash-dropdown .Select-control, .dropdown, .select {
+    background: rgba(255,255,255,0.06) !important;
+    border-radius: 10px !important;
+    border: 1px solid rgba(255,255,255,0.12) !important;
+    color: white !important;
+    min-height: 42px !important;
+}
+
+.Select-input input {
+    color: white !important;
+    background: transparent !important;
+}
+
+.Select-placeholder, .Select-value-label {
+    color: rgba(255,255,255,0.8) !important;
+    padding: 8px 12px !important;
+}
+
+.Select-menu-outer {
+    background: #1b1b1d !important;
+    color: white !important;
+    border-radius: 8px !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+    z-index: 9999 !important;
+    backdrop-filter: blur(18px) !important;
+}
+
+.Select-option {
+    background: transparent !important;
+    color: white !important;
+    padding: 10px 12px !important;
+}
+
+.Select-option.is-focused {
+    background: rgba(58, 132, 255, 0.3) !important;
+}
+
+.Select-option.is-selected {
+    background: rgba(58, 132, 255, 0.5) !important;
+}
+
+/* ---- SLIDER ---- */
+.rc-slider {
+    margin: 15px 8px !important;
+}
+
+.rc-slider-track {
+    background: #3A84FF !important;
+}
+
+.rc-slider-handle {
+    border: 2px solid #FF7A30 !important;
+    background: #FF7A30 !important;
+    width: 18px !important;
+    height: 18px !important;
+    margin-top: -7px !important;
+}
+
+.rc-slider-rail {
+    background: rgba(255,255,255,0.1) !important;
+}
+
+/* ---- INPUT FIELDS ---- */
+input[type="text"], input[type="number"], input[type="email"],
+input[type="password"], textarea, .form-control {
+    background: rgba(255,255,255,0.05) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255,255,255,0.10) !important;
+    border-radius: 10px !important;
+    padding: 10px 12px !important;
+    width: 100% !important;
+}
+
+input[type="text"]:focus, input[type="number"]:focus,
+textarea:focus, .form-control:focus {
+    border-color: #3A84FF !important;
+    box-shadow: 0 0 0 2px rgba(58, 132, 255, 0.2) !important;
+    outline: none !important;
+}
+
+/* ---- BUTTONS ---- */
+.btn {
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    border: none !important;
+    padding: 10px 20px !important;
+    transition: all 0.3s ease !important;
+}
+
+.btn-success {
+    background: linear-gradient(90deg, #28a745, #2ecc71) !important;
+}
+
+.btn-info {
+    background: linear-gradient(90deg, #2F80ED, #56CCF2) !important;
+}
+
+.btn-secondary {
+    background: rgba(255,255,255,0.10) !important;
+    color: white !important;
+}
+
+.btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3) !important;
+}
+
+/* ---- LABELS AND TEXT ---- */
+label, .filter-label, .control-label, [class*="label"] {
+    color: #E6EEF6 !important;
+    font-weight: 600 !important;
+    margin-bottom: 8px !important;
+    display: block !important;
+}
+
+.form-group {
+    margin-bottom: 15px !important;
+}
+
+/* ---- CHECKBOXES AND RADIO BUTTONS ---- */
+input[type="checkbox"], input[type="radio"] {
+    margin-right: 8px !important;
+}
+
+/* ---- TRANSPARENT PLOTLY GRAPHS ---- */
+.js-plotly-plot, .plotly, .graph, .plot-container, 
+.svg-container, main, div[id*="chart"], 
+div[id*="graph"], .dash-graph {
+    background: transparent !important;
+}
+
+/* Remove plotly grid lines for cleaner look */
+g.gridlayer {
+    opacity: 0.12 !important;
+}
+
+/* Plotly modebar styling */
+.modebar {
+    background: rgba(255,255,255,0.1) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 8px !important;
+}
+
+.modebar-btn {
+    color: rgba(255,255,255,0.7) !important;
+}
+
+.modebar-btn:hover {
+    background: rgba(255,255,255,0.1) !important;
+}
+
+/* ---- LAYOUT AND SPACING ---- */
+.container, .row, .col {
+    background: transparent !important;
+}
+
+/* Ensure proper z-index for dropdowns */
+.Select-control, .Select-menu-outer {
+    position: relative !important;
+    z-index: 1000 !important;
+}
+
+.Select-menu-outer {
+    z-index: 9999 !important;
+}
+
+/* ---- RESPONSIVE DESIGN ---- */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    .filter-section, .card {
+        padding: 15px !important;
+    }
+    
+    .btn {
+        padding: 8px 16px !important;
+    }
+}
+
+/* ---- CUSTOM SCROLLBAR ---- */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.05);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.3);
+}

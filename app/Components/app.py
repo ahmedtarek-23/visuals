@@ -1,247 +1,296 @@
-<<<<<<< HEAD
 import dash
 import dash_bootstrap_components as dbc
+from dash import html, dcc, Input, Output, State
+import DataLoader
+import charts
+import pandas as pd
 
-from charts import Bar_chart, Pie_chart
-from DataLoader import load_data, Brough_options, CRASH_YEAR, Contributing_Factor1, Contributing_Factor2, Vehicle1, Vehicle2, Injury
-=======
-from dash.dependencies import Input, Output, State
-import dash
-import plotly.express as px
+# Initialize
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.DARKLY , "/assets/styles.css"])
 
-from dash import dcc, html
-import dash_bootstrap_components as dbc
+#Loading the data
+df = DataLoader.load_data()
 
-from charts import Bar_chart, Pie_chart
-# FIXED: Updated imports to match DataLoader.py
-from DataLoader import load_data, Borough_options, CRASH_YEAR, Contributing_Factor1, Contributing_Factor2, Vehicle1, Vehicle2, Demographic_Options
->>>>>>> 2578d97bd5cb1d8a7481b4701ed58e89af6a41af
+# --- Dropdown function ---
+def make_dropdown(label, id, col):
+    return dbc.Col(
+        children=[
+            dbc.Label(label, className="fw-bold"),
+            dcc.Dropdown(id=id, options=DataLoader.get_options(df, col), placeholder="All")
+        ],
+        md=4,
+        className="mb-3"
+    )
 
-df = load_data()  # now your app can use df anywhere
+# --- Layout ---
+app.layout = dbc.Container([
+    
+    #introduce download component
+    dcc.Download(id="download-report"),
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.SOLAR], suppress_callback_exceptions=True)
+    # --- Navbar ---
+    dbc.NavbarSimple(brand="NYC Traffic Crashes Dashboard", color="dark", dark=True, className="mb-4" ),
 
-app.layout = html.Div([
 
-    html.H1("Analytical Dashboard", style={"text-align": "center", "margin-bottom": "30px"}),
 
-    dbc.Container([
-
+    # --- Dropdown Cards ---
+   dbc.Card([
+    dbc.CardHeader("Filters"),
+    dbc.CardBody([
         dbc.Row([
-<<<<<<< HEAD
-            dcc.Dropdown(id="my-BroughDropdown",
-                         options=[{"label": "All", "value": "ALL"},
-                                  {"label": "None", "value": "NONE"}] +
-                                 [{"label": b, "value": b} for b in Brough_options],
-=======
-            # FIXED: ID and Options variable name corrected
-            dcc.Dropdown(id="my-BoroughDropdown",
-                         options=[{"label": "All", "value": "ALL"},
-                                  {"label": "None", "value": "NONE"}] +
-                                 [{"label": b, "value": b} for b in Borough_options],
->>>>>>> 2578d97bd5cb1d8a7481b4701ed58e89af6a41af
-                         placeholder="Select Borough....",
-                         multi=False,
-                         style={"width": "200px"}),
+            make_dropdown("Borough", "Borough-dropdown", "BOROUGH"),
+            make_dropdown("Factor", "Factor-dropdown", "CONTRIBUTING FACTOR VEHICLE 1"), 
+            make_dropdown("Demographic", "Demographic-dropdown", "MOST_COMMON_SEX"),
+        ])
+    ])
+], className="mb-4"),
 
-            dcc.Dropdown(id="year-dropdown",
-                         options=[{"label": "All", "value": "ALL"},
-                                  {"label": "None", "value": "NONE"}] +
-                                 [{"label": y, "value": y} for y in CRASH_YEAR],
-                         placeholder="Select Year....",
-                         multi=False,
-                         style={"width": "200px"}),
+    # --- Year Slider Card ---
+    dbc.Row([
+        dbc.Col(
+            dbc.Card([
+                dbc.CardHeader("Year Selection"),
+                dbc.CardBody([
+                    dcc.Slider(
+                        id="year-slider",
+                        min=2009,
+                        max=2023,
+                        step=1,
+                        marks={y: str(y) for y in range(2009, 2024)},
+                        value=2023
+                    )
+                ])
+            ], className="mb-3"), md=12
+        )
+    ]),
 
-            dcc.Dropdown(id="Controbuting1_Dropdown",
-                         options=[{"label": "All", "value": "ALL"},
-                                  {"label": "None", "value": "NONE"}] +
-                                 [{"label": c, "value": c} for c in Contributing_Factor1],
-                         placeholder="Select Contributing factor 1....",
-                         multi=False,
-                         style={"width": "300px"}),
+    # --- Search Card ---
+    dbc.Row([
+        dbc.Col(
+            dbc.Card([
+                dbc.CardHeader("Search"),
+                dbc.CardBody([
+                    dcc.Input(
+                        id="search-input",
+                        type="text",
+                        placeholder="Type to search...",
+                        debounce=True,
+                        style={"width": "100%"}
+                    )
+                ])
+            ], className="mb-3"), md=7
+        ),
 
-            dcc.Dropdown(id="Controbuting2_Dropdown",
-                         options=[{"label": "All", "value": "ALL"},
-                                  {"label": "None", "value": "NONE"}] +
-                                 [{"label": l, "value": l} for l in Contributing_Factor2],
-                         placeholder="Select Contributing factor 2....",
-                         multi=False,
-                         style={"width": "200px"}),
-        ], className="Rows 1"),
+        # --- Generate Button Card ---
+        dbc.Col(
+            dbc.Card([
+                dbc.CardHeader("Generate Report/Reset/Download"),
+                dbc.CardBody([
+                    dbc.Button("Generate Report", id="btn-gen", color="success", className="me-2"),
+                      dbc.Button("Reset", id="btn-reset", color="secondary", className="me-2"),
+                      dbc.Button("Download Data", id="Download-button", color="info")
+                ])
+            ], className="me-2"), md=5
+        ),        
+    ]),
 
-        dbc.Row([
-            dcc.Dropdown(id="Vehicle1_Dropdown",
-                         options=[{"label": "All", "value": "ALL"},
-                                  {"label": "None", "value": "NONE"}] +
-                                 [{"label": v, "value": v} for v in Vehicle1],
-                         placeholder="Select Vehicle type 1....",
-                         multi=False,
-                         style={"width": "200px"}),
+    # Stats Cards
+    dbc.Row([
+        dbc.Col(dbc.Card([dbc.CardBody([html.H3(id="C-Crash"), html.P("Total Crashes")])], color="primary", inverse=True , className="hover-pop")),
+        dbc.Col(dbc.Card([dbc.CardBody([html.H3(id="C-Injuries"), html.P("Total Injuries")])], color="warning", inverse=True, className="hover-pop")),
+        dbc.Col(dbc.Card([dbc.CardBody([html.H3(id="C-Fatalities"), html.P("Total Fatalities")])], color="danger", inverse=True, className="hover-pop")),
+        dbc.Col(dbc.Card([dbc.CardBody([html.H3(id="C-average"), html.P("Avg Persons Involved")])], color="info", inverse=True,className="hover-pop")),
+    ], className="mb-4"),
 
-            dcc.Dropdown(id="Vehicle2_Dropdown",
-                         options=[{"label": "All", "value": "ALL"},
-                                  {"label": "None", "value": "NONE"}] +
-                                 [{"label": f, "value": f} for f in Vehicle2],
-                         placeholder="Select Vehicle type 2....",
-                         multi=False,
-                         style={"width": "200px"}),
-
-<<<<<<< HEAD
-            dcc.Dropdown(id="Injury_dropdown",
-                         options=[{"label": "All", "value": "ALL"},
-                                  {"label": "None", "value": "NONE"}] +
-                                 [{"label": i, "value": i} for i in Injury],
-                         placeholder="Select Injury Type....",
-=======
-            # FIXED: Variable name updated to Demographic_Options
-            dcc.Dropdown(id="Injury_dropdown",
-                         options=[{"label": "All", "value": "ALL"},
-                                  {"label": "None", "value": "NONE"}] +
-                                 [{"label": i, "value": i} for i in Demographic_Options],
-                         placeholder="Select Demographic (Sex)....",
->>>>>>> 2578d97bd5cb1d8a7481b4701ed58e89af6a41af
-                         multi=False,
-                         style={"width": "200px"}),
-        ], className="Rows 2"),
-
-        html.Div([
-            html.Button("Generate Report", id="generate-report-button", n_clicks=0)
-        ]),
-
-        dbc.Row([
-            dbc.Col(dcc.Graph(id="pie-chart"), width=6),
-            dbc.Col(dcc.Graph(id="Bar_chart"), width=6)
-        ], className="Graphs-Rows"),
-
-        html.Div(id="output")
-
-<<<<<<< HEAD
+    # Grid Charts
+    dbc.Row([
+        dbc.Col(dcc.Graph(id="Bar_chart" , className="hover-pop"), md=6),
+        dbc.Col(dcc.Graph(id="Pie_chart", className="hover-pop"), md=6),
+    ], className="mb-4"),
+    
+    dbc.Row([
+        dbc.Col(dcc.Graph(id="line_graph" , className="hover-pop"), md=12),
+    ], className="mb-4"),
+    
+    dbc.Row([
+    dbc.Col(dcc.Graph(id="Map" , className="hover-pop"), md=6),
+    dbc.Col(dcc.Graph(id="heat_map" , className="hover-pop"), md=6)
+])
+    
 ], fluid=True)
+ 
+# ---Search Function ---
+def apply_search_filter(dataframe, search_text):
+    """Apply search filter across multiple columns with support for multiple terms"""
+    if not search_text or not isinstance(search_text, str) or search_text.strip() == "":
+        return dataframe
+    
+    search_text_lower = search_text.lower().strip()
+    print(f"🔍 Searching for: '{search_text_lower}'")  # Debug print
+    
+    # Split search text into individual terms
+    search_terms = search_text_lower.split()
+    print(f"🔍 Search terms: {search_terms}")  # Debug print
+    
+    # Define columns to search in - expanded list
+    search_columns = [
+        'BOROUGH', 
+        'VEHICLE TYPE CODE 1', 
+        'CONTRIBUTING FACTOR VEHICLE 1',
+        'MOST_COMMON_SEX',
+        'VEHICLE TYPE CODE 2',
+        'CONTRIBUTING FACTOR VEHICLE 2',
+        'VEHICLE TYPE CODE 3', 
+        'CONTRIBUTING FACTOR VEHICLE 3',
+        'VEHICLE TYPE CODE 4',
+        'CONTRIBUTING FACTOR VEHICLE 4',
+        'VEHICLE TYPE CODE 5',
+        'CONTRIBUTING FACTOR VEHICLE 5'
+    ]
+    
+    # Add year column if it exists - check multiple possible year column names
+    year_cols = [col for col in dataframe.columns if any(year_term in col.upper() for year_term in ['YEAR', 'DATE', 'TIME'])]
+    search_columns.extend(year_cols)
+    
+    # Filter columns that actually exist in the dataframe
+    available_columns = [col for col in search_columns if col in dataframe.columns]
+    print(f"📊 Available columns for search: {available_columns}")  # Debug print
+    print(f"📊 DataFrame shape before search: {dataframe.shape}")  # Debug print
+    
+    if not available_columns:
+        print("❌ No searchable columns found in dataframe!")
+        return dataframe
+    
+    # Create a mask for each search term
+    final_mask = pd.Series(True, index=dataframe.index)  # Start with all True
+    
+    for term in search_terms:
+        term_mask = pd.Series(False, index=dataframe.index)
+        
+        for col in available_columns:
+            try:
+                # Convert to string and handle NaN values
+                col_series = dataframe[col].fillna('').astype(str).str.lower()
+                
+                # Check if this column contains the current search term
+                col_mask = col_series.str.contains(term, na=False)
+                term_mask = term_mask | col_mask
+                
+            except Exception as e:
+                print(f"   ❌ Error searching column '{col}' for term '{term}': {e}")
+        
+        # Combine with AND logic - all terms must be found somewhere
+        final_mask = final_mask & term_mask
+        print(f"   ✅ Term '{term}': found {term_mask.sum()} matches")
+    
+    filtered_df = dataframe[final_mask]
+    print(f"📊 DataFrame shape after search: {filtered_df.shape}")  # Debug print
+    print(f"✅ Final matches found: {len(filtered_df)}")  # Debug print
+    
+    # If no matches found, show what values are actually in the searchable columns
+    if len(filtered_df) == 0:
+        print("🔎 No matches found. Here are the unique values in searchable columns:")
+        for col in available_columns[:6]:  # Show first 6 columns to avoid too much output
+            unique_vals = dataframe[col].dropna().unique()[:10]  # First 10 unique values
+            print(f"   '{col}': {list(unique_vals)}")
+    
+    return filtered_df
 
-# --- Callbacks ---
+
+# --- Callbacks for filtering ---
 @app.callback([
     Output('Borough-dropdown', 'value'),
     Output('Demographic-dropdown', 'value'),
-    Output('Vehicle-dropdown', 'value'),
     Output('Factor-dropdown', 'value'),
-    Output('year-slider', 'value')
+    Output('year-slider', 'value'),
+    Output('search-input', 'value')
+
     ],
 
     [
     Input('btn-reset', 'n_clicks')
     ]
 )
+
+#Reseting values to filtering the whole datSet
 def reset_filters(n):
-     return None, None , None , None, 2023
-=======
-    ], fluid=True)
+     return None, None  , None, 2023 , ""
 
-])
->>>>>>> 2578d97bd5cb1d8a7481b4701ed58e89af6a41af
-
+#Callback to update dashboard
 @app.callback(
     [
-        Output('Bar_chart', 'figure'),
-        Output('pie-chart', 'figure'),
+        Output('C-Crash', 'children'), 
+        Output('C-Injuries', 'children'), 
+        Output('C-Fatalities', 'children'), 
+        Output('C-average', 'children'),
+        Output('Bar_chart', 'figure'), 
+        Output('Pie_chart', 'figure'), 
+        Output('line_graph', 'figure'), 
+        Output('heat_map', 'figure'), 
+        Output('Map', 'figure'),
     ],
-    Input('generate-report-button', 'n_clicks'),
-<<<<<<< HEAD
-    State("my-BroughDropdown", "value"),
-=======
-    State("my-BoroughDropdown", "value"), # FIXED: State ID match
->>>>>>> 2578d97bd5cb1d8a7481b4701ed58e89af6a41af
-    State("year-dropdown", "value"),
-    State("Controbuting1_Dropdown", "value"),
-    State("Controbuting2_Dropdown", "value"),
-    State("Vehicle1_Dropdown", "value"),
-    State("Vehicle2_Dropdown", "value"),
-    State("Injury_dropdown", "value"),
+    [
+        Input('btn-gen', 'n_clicks'),
+    ],
+    [
+        State('Borough-dropdown', 'value'), 
+        State('Demographic-dropdown', 'value'),
+        State('Factor-dropdown', 'value'),
+        State('year-slider', 'value'),
+        State('search-input', 'value')
+    ]
 )
-def update_charts(n_clicks, selected_boroughs, selected_year,
-                  Selected_Contributing1, Selected_Contributing2,
-<<<<<<< HEAD
-                  Selected_Vehicle1, Selected_Vehicle2, Selected_Injury):
-=======
-                  Selected_Vehicle1, Selected_Vehicle2, Selected_Demographic): # FIXED variable name
->>>>>>> 2578d97bd5cb1d8a7481b4701ed58e89af6a41af
+def update_dashboard(n, bor, demo, fac, year_slider, search_text):
 
-    if n_clicks == 0:
-        return dash.no_update
+    # Mapping the dataframe based on the filters
+    inputs = {'borough': bor, 'factor1': fac  ,'year': year_slider, 'demographic': demo}
+    
+    #Apply all filters
+    dff = DataLoader.filter_dataframe(df, inputs)
 
-    df_filtered = df.copy()
+    #Apllying the searhc function filter     
+    dff = apply_search_filter(dff, search_text)
+     
+    # Getting stats
+    s1, s2, s3, s4 = charts.get_stats(dff)
 
-    if selected_boroughs == "ALL":
-        pass
-    elif selected_boroughs == "NONE":
-        pass
-    else:
-        df_filtered = df_filtered[df_filtered["BOROUGH"] == selected_boroughs]
+    # Charts with template
+    return s1, s2, s3, s4, \
+           charts.create_bar(dff), charts.create_pie(dff), \
+           charts.create_line(dff), charts.create_heatmap(dff), charts.create_map(dff)
 
-    if selected_year == "ALL":
-        pass
-    elif selected_year == "NONE":
-        pass
-    else:
-        df_filtered = df_filtered[df_filtered["CRASH_YEAR"] == selected_year]
+# --- Download Callback ---
+@app.callback(
+    Output("download-report", "data"),
+    Input("Download-button", "n_clicks"),
+    [
+        State('Borough-dropdown', 'value'),
+        State('Factor-dropdown', 'value'),
+        State('Demographic-dropdown', 'value'),
+        State('year-slider', 'value'),
+        State('search-input', 'value')
+    ],
+    prevent_initial_call=True
+)
 
-    if Selected_Contributing1 == "ALL":
-        pass
-    elif Selected_Contributing1 == "NONE":
-        pass
-    else:
-        df_filtered = df_filtered[df_filtered["CONTRIBUTING FACTOR VEHICLE 1"] == Selected_Contributing1]
+def download_csv(n_clicks, bor, fac,  demo, year, search_text):
 
-    if Selected_Contributing2 == "ALL":
-        pass
-    elif Selected_Contributing2 == "NONE":
-        pass
-    else:
-        df_filtered = df_filtered[df_filtered["CONTRIBUTING FACTOR VEHICLE 2"] == Selected_Contributing2]
+    # Filter dataframe
+    inputs = {'borough': bor, 'factor1': fac,  'demographic': demo, 'year': year}
 
-    if Selected_Vehicle1 == "ALL":
-        pass
-    elif Selected_Vehicle1 == "NONE":
-        pass
-    else:
-        df_filtered = df_filtered[df_filtered["VEHICLE TYPE CODE 1"] == Selected_Vehicle1]
+    dff = DataLoader.filter_dataframe(df, inputs)
+    dff = apply_search_filter(dff, search_text)
 
-    if Selected_Vehicle2 == "ALL":
-        pass
-    elif Selected_Vehicle2 == "NONE":
-        pass
-    else:
-        df_filtered = df_filtered[df_filtered["VEHICLE TYPE CODE 2"] == Selected_Vehicle2]
+    # Apply search filter
+    if search_text:
+        search_text_lower = search_text.lower()
+        search_cols = ['BOROUGH', 'VEHICLE TYPE CODE 1', 'CONTRIBUTING FACTOR VEHICLE 1']
+        dff = dff[dff[search_cols].apply(lambda row: row.astype(str).str.lower().str.contains(search_text_lower).any(), axis=1)]
 
-<<<<<<< HEAD
-    if Selected_Injury == "ALL":
-        pass
-    elif Selected_Injury == "NONE":
-        pass
-    else:
-        df_filtered = df_filtered[df_filtered["PERSON_INJURY"] == Selected_Injury]
-=======
-    if Selected_Demographic == "ALL":
-        pass
-    elif Selected_Demographic == "NONE":
-        pass
-    else:
-        # FIXED: Use correct column MOST_COMMON_SEX instead of PERSON_INJURY
-        df_filtered = df_filtered[df_filtered["MOST_COMMON_SEX"] == Selected_Demographic]
->>>>>>> 2578d97bd5cb1d8a7481b4701ed58e89af6a41af
-
-    # If df_filtered is empty, return empty figures
-    if df_filtered.empty:
-        return px.bar(title="No data available"), px.pie(title="No data available")
-
-    bar_fig = Bar_chart(df_filtered)
-    pie_fig = Pie_chart(df_filtered, "CONTRIBUTING FACTOR VEHICLE 1")
-
-    return bar_fig, pie_fig
+    # Return CSV
+    return dcc.send_data_frame(dff.to_csv, "nyc_traffic_crashes.csv", index=False)
 
 
-if __name__ == "__main__":
-<<<<<<< HEAD
-    app.run(debug=True)
-=======
-    app.run(debug=True)
->>>>>>> 2578d97bd5cb1d8a7481b4701ed58e89af6a41af
+if __name__ == '__main__':
+    app.run(debug=True, port=8050)
+
