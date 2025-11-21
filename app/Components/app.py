@@ -123,19 +123,21 @@ app.layout = dbc.Container([
 ], fluid=True)
  
 # ---Search Function ---
-def apply_search_filter(dataframe, search_text):
-    """Apply search filter across multiple columns with support for multiple terms"""
+def apply_search_filter(dataframe, search_text, logic="AND"):
+    """
+    Filters the dataframe based on search_text across multiple columns.
+    Handles categoricals, numeric, and string columns safely.
+    """
     if not search_text or not isinstance(search_text, str) or search_text.strip() == "":
         return dataframe
-    
+
+    # Normalize column names
+    dataframe.columns = dataframe.columns.str.strip().str.upper()
+
     search_text_lower = search_text.lower().strip()
-    print(f"🔍 Searching for: '{search_text_lower}'")  # Debug print
-    
-    # Split search text into individual terms
     search_terms = search_text_lower.split()
-    print(f"🔍 Search terms: {search_terms}")  # Debug print
-    
-    # Define columns to search in - expanded list
+
+    # Define searchable columns
     search_columns = [
         'BOROUGH', 
         'VEHICLE TYPE CODE 1', 
@@ -150,54 +152,44 @@ def apply_search_filter(dataframe, search_text):
         'VEHICLE TYPE CODE 5',
         'CONTRIBUTING FACTOR VEHICLE 5'
     ]
-    
-    # Add year column if it exists - check multiple possible year column names
-    year_cols = [col for col in dataframe.columns if any(year_term in col.upper() for year_term in ['YEAR', 'DATE', 'TIME'])]
+
+    # Include year/date columns if they exist
+    year_cols = [col for col in dataframe.columns if any(term in col for term in ['YEAR','DATE','TIME'])]
     search_columns.extend(year_cols)
-    
-    # Filter columns that actually exist in the dataframe
+
+    # Filter columns that actually exist
     available_columns = [col for col in search_columns if col in dataframe.columns]
-    print(f"📊 Available columns for search: {available_columns}")  # Debug print
-    print(f"📊 DataFrame shape before search: {dataframe.shape}")  # Debug print
-    
+
     if not available_columns:
-        print("❌ No searchable columns found in dataframe!")
+        print("❌ No searchable columns found!")
         return dataframe
-    
-    # Create a mask for each search term
-    final_mask = pd.Series(True, index=dataframe.index)  # Start with all True
-    
+
+    # Convert all searchable columns to string safely
+    for col in available_columns:
+        dataframe[col] = dataframe[col].astype(str).fillna('')
+
+    # Initialize final mask
+    if logic.upper() == "AND":
+        final_mask = pd.Series(True, index=dataframe.index)
+    else:
+        final_mask = pd.Series(False, index=dataframe.index)
+
+    # Apply search terms
     for term in search_terms:
         term_mask = pd.Series(False, index=dataframe.index)
-        
         for col in available_columns:
-            try:
-                # Convert to string and handle NaN values
-                col_series = dataframe[col].fillna('').astype(str).str.lower()
-                
-                # Check if this column contains the current search term
-                col_mask = col_series.str.contains(term, na=False)
-                term_mask = term_mask | col_mask
-                
-            except Exception as e:
-                print(f"   ❌ Error searching column '{col}' for term '{term}': {e}")
-        
-        # Combine with AND logic - all terms must be found somewhere
-        final_mask = final_mask & term_mask
-        print(f"   ✅ Term '{term}': found {term_mask.sum()} matches")
-    
+            # Safe string contains
+            term_mask |= dataframe[col].str.lower().str.contains(term, na=False)
+        if logic.upper() == "AND":
+            final_mask &= term_mask
+        else:
+            final_mask |= term_mask
+
     filtered_df = dataframe[final_mask]
-    print(f"📊 DataFrame shape after search: {filtered_df.shape}")  # Debug print
-    print(f"✅ Final matches found: {len(filtered_df)}")  # Debug print
-    
-    # If no matches found, show what values are actually in the searchable columns
-    if len(filtered_df) == 0:
-        print("🔎 No matches found. Here are the unique values in searchable columns:")
-        for col in available_columns[:6]:  # Show first 6 columns to avoid too much output
-            unique_vals = dataframe[col].dropna().unique()[:10]  # First 10 unique values
-            print(f"   '{col}': {list(unique_vals)}")
-    
     return filtered_df
+
+
+
 
 
 # --- Callbacks for filtering ---
@@ -287,7 +279,7 @@ def download_csv(n_clicks, bor, fac,  demo, year, search_text):
     # Apply search filter
     if search_text:
         search_text_lower = search_text.lower()
-        search_cols = ['BOROUGH', 'VEHICLE TYPE CODE 1', 'CONTRIBUTING FACTOR VEHICLE 1']
+        search_cols = ['BOROUGH', 'VEHICLE TYPE CODE 1', 'CONTRIBUTING FACTOR VEHICLE 1' , "MOST_COMMON_SEX", "CRASH_YEAR"]
         dff = dff[dff[search_cols].apply(lambda row: row.astype(str).str.lower().str.contains(search_text_lower).any(), axis=1)]
 
     # Return CSV
@@ -297,4 +289,3 @@ def download_csv(n_clicks, bor, fac,  demo, year, search_text):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8050))
     app.run_server(host="0.0.0.0", port=port, debug=True)
-
